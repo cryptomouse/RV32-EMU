@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 struct hart_bus_interface;
 typedef struct hart_bus_interface hart_BusInterface;
 struct hart_hart {

@@ -109,7 +109,7 @@ public func cycle (hart: *Hart) -> Bool {
 	let instr: Word32 = fetch(hart)
 	exec(hart, instr)
 	let mc: *Nat32 = unsafe *Nat32 &hart.csrs[csr.mcycle_regno]
-	*mc = *mc + 1
+	++*mc
 
 	return not hart.end
 }

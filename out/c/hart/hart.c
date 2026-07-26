@@ -44,7 +44,6 @@ void hart_interrupt(struct hart_hart *hart, uint32_t int_num) {
 #define FUNCT3_CSRRSI 5
 #define FUNCT3_CSRRCI 6
 
-
 void hart_init(struct hart_hart *hart, uint32_t id, hart_BusInterface *bus) {
 	printf("hart #%d init\n", id);
 	hart_setCsr(hart, CSR_MHARTID_REGNO, id);
@@ -54,7 +53,6 @@ void hart_init(struct hart_hart *hart, uint32_t id, hart_BusInterface *bus) {
 	hart->bus = bus;
 	hart->end = false;
 }
-
 
 __attribute__((always_inline))
 static inline uint32_t fetch(struct hart_hart *hart) {
@@ -77,7 +75,7 @@ bool hart_cycle(struct hart_hart *hart) {
 	const uint32_t instr = fetch(hart);
 	exec(hart, instr);
 	uint32_t *const mc = (uint32_t *)&hart->csrs[CSR_MCYCLE_REGNO];
-	*mc = *mc + 1;
+	++*mc;
 	return !hart->end;
 }
 
@@ -125,7 +123,6 @@ static void exec(struct hart_hart *hart, uint32_t instr) {
 	}
 	hart->pc = nexpc;
 }
-
 
 static void execI(struct hart_hart *hart, uint32_t instr) {
 	const uint8_t funct3 = decode_extract_funct3(instr);
@@ -236,14 +233,12 @@ static void execR(struct hart_hart *hart, uint32_t instr) {
 	hart->regs[rd] = result;
 }
 
-
 static void execLUI(struct hart_hart *hart, uint32_t instr) {
 	const uint32_t imm = decode_extract_imm31_12(instr);
 	const uint8_t rd = decode_extract_rd(instr);
 	trace(hart->pc, "lui x%d, 0x%X\n", rd, imm);
 	hart->regs[rd] = imm << 12;
 }
-
 
 static void execAUIPC(struct hart_hart *hart, uint32_t instr) {
 	const int32_t imm = decode_expand12(decode_extract_imm31_12(instr));
@@ -263,7 +258,6 @@ static uint32_t execJAL(struct hart_hart *hart, uint32_t instr) {
 	return (uint32_t)abs((int32_t)hart->pc + imm);
 }
 
-
 static uint32_t execJALR(struct hart_hart *hart, uint32_t instr) {
 	const uint8_t rs1 = decode_extract_rs1(instr);
 	const uint8_t rd = decode_extract_rd(instr);
@@ -274,7 +268,6 @@ static uint32_t execJALR(struct hart_hart *hart, uint32_t instr) {
 	hart->regs[rd] = next_instr_ptr;
 	return nexpc;
 }
-
 
 static uint32_t execB(struct hart_hart *hart, uint32_t instr) {
 	const uint8_t funct3 = decode_extract_funct3(instr);
@@ -319,7 +312,6 @@ static uint32_t execB(struct hart_hart *hart, uint32_t instr) {
 	return nexpc;
 }
 
-
 static void execL(struct hart_hart *hart, uint32_t instr) {
 	const uint8_t funct3 = decode_extract_funct3(instr);
 	const int32_t imm = decode_expand12(decode_extract_imm12(instr));
@@ -346,7 +338,6 @@ static void execL(struct hart_hart *hart, uint32_t instr) {
 	}
 	hart->regs[rd] = result;
 }
-
 
 static void execS(struct hart_hart *hart, uint32_t instr) {
 	const uint8_t funct3 = decode_extract_funct3(instr);
@@ -426,16 +417,13 @@ static void execFence(struct hart_hart *hart, uint32_t instr) {
 	}
 }
 
-
 uint32_t hart_getCsr(struct hart_hart *hart, uint16_t csrno) {
 	return hart->csrs[csrno];
 }
 
-
 void hart_setCsr(struct hart_hart *hart, uint16_t csrno, uint32_t value) {
 	hart->csrs[csrno] = value;
 }
-
 
 static void csr_rw(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t rs1) {
 	const uint32_t nv = hart->regs[rs1];
@@ -443,13 +431,11 @@ static void csr_rw(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t rs1
 	hart_setCsr(hart, csr, nv);
 }
 
-
 static void csr_rs(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t rs1) {
 	const uint32_t set = hart->regs[rs1];
 	hart->regs[rd] = hart_getCsr(hart, csr);
 	hart_setCsr(hart, csr, hart_getCsr(hart, csr) | hart->regs[rs1]);
 }
-
 
 static void csr_rc(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t rs1) {
 	const uint32_t set = hart->regs[rs1];
@@ -457,20 +443,17 @@ static void csr_rc(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t rs1
 	hart_setCsr(hart, csr, hart_getCsr(hart, csr) & ~hart->regs[rs1]);
 }
 
-
 static void csr_rwi(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t imm) {
 	const uint32_t imm32 = (uint32_t)imm;
 	hart->regs[rd] = hart_getCsr(hart, csr);
 	hart_setCsr(hart, csr, imm32);
 }
 
-
 static void csr_rsi(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t imm) {
 	const uint32_t imm32 = (uint32_t)imm;
 	hart->regs[rd] = hart_getCsr(hart, csr);
 	hart_setCsr(hart, csr, hart_getCsr(hart, csr) | imm32);
 }
-
 
 static void csr_rci(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t imm) {
 	const uint32_t imm32 = (uint32_t)imm;
@@ -492,7 +475,6 @@ static void trace(uint32_t pc, char *form, ...) {
 	scanf("%c", &c);
 }
 
-
 static void trace2(uint32_t pc, char *form, ...) {
 	va_list va;
 	va_start(va, form);
@@ -501,7 +483,6 @@ static void trace2(uint32_t pc, char *form, ...) {
 	va_end(va);
 }
 
-
 static void fatal(char *form, ...) {
 	va_list va;
 	va_start(va, form);
@@ -509,7 +490,6 @@ static void fatal(char *form, ...) {
 	va_end(va);
 	exit(-1);
 }
-
 
 static void notImplemented(char *form, ...) {
 	va_list va;
@@ -520,7 +500,6 @@ static void notImplemented(char *form, ...) {
 	puts("\"\n");
 	exit(-1);
 }
-
 
 void hart_show_regs(struct hart_hart *hart) {
 	uint16_t i = 0;

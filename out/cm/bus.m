@@ -109,7 +109,7 @@ public func memoryViolation (rw: Char8, adr: Nat32) -> Unit {
 	if memviolationCnt > 10 {
 		exit(1)
 	}
-	memviolationCnt = memviolationCnt + 1
+	++memviolationCnt
 }
 
 

@@ -42,7 +42,7 @@ func main () -> Int {
 		if not rvHart.cycle(&hart) {
 			break
 		}
-		timer_cnt = timer_cnt + 1
+		++timer_cnt
 		if timer_cnt == 1000 {
 			timer_cnt = 0
 			rvHart.interrupt(&hart, rvHart.intSysTimer)
