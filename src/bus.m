@@ -46,7 +46,14 @@ public func read (adr: Nat32, size: Nat8) -> Word32 {
 		return readFrom(romPtr, adr, size)
 
 	} else if isAdressInRegion(adr, mmioRegion) {
-		// MMIO Read
+		let mmioAdr = adr - mmioStart
+		if size == 1 {
+			return Word32 mmio.read8(mmioAdr)
+		} else if size == 2 {
+			return Word32 mmio.read16(mmioAdr)
+		} else if size == 4 {
+			return mmio.read32(mmioAdr)
+		}
 
 	} else {
 		memoryViolation("r", adr)

@@ -88,7 +88,7 @@ static uint32_t execJALR(struct hart_hart *hart, uint32_t instr);
 static uint32_t execB(struct hart_hart *hart, uint32_t instr);
 static void execL(struct hart_hart *hart, uint32_t instr);
 static void execS(struct hart_hart *hart, uint32_t instr);
-static void execSystem(struct hart_hart *hart, uint32_t instr);
+static uint32_t execSystem(struct hart_hart *hart, uint32_t instr, uint32_t nexpc);
 static void execFence(struct hart_hart *hart, uint32_t instr);
 
 static void exec(struct hart_hart *hart, uint32_t instr) {
@@ -115,7 +115,7 @@ static void exec(struct hart_hart *hart, uint32_t instr) {
 	} else if (op == OP_S) {
 		execS(hart, instr);
 	} else if (op == OP_SYSTEM) {
-		execSystem(hart, instr);
+		nexpc = execSystem(hart, instr, nexpc);
 	} else if (op == OP_FENCE) {
 		execFence(hart, instr);
 	} else {
@@ -151,7 +151,7 @@ static void execI(struct hart_hart *hart, uint32_t instr) {
 		result = hart->regs[rs1] >> (uint8_t)abs(imm);
 	} else if (funct3 == 0x5 && funct7 == 0x20) {
 		trace(hart->pc, "srai x%d, x%d, %d\n", rd, rs1, imm);
-		result = hart->regs[rs1] >> (uint8_t)abs(imm);
+		result = (uint32_t)((uint64_t)(int64_t)hart->regs[rs1] >> (uint8_t)abs(imm));
 	} else if (funct3 == 0x6) {
 		trace(hart->pc, "ori x%d, x%d, %d\n", rd, rs1, imm);
 		result = hart->regs[rs1] | (uint32_t)imm;
@@ -162,8 +162,6 @@ static void execI(struct hart_hart *hart, uint32_t instr) {
 	}
 	hart->regs[rd] = result;
 }
-
-static void notImplemented(char *form, ...);
 
 static void execR(struct hart_hart *hart, uint32_t instr) {
 	const uint8_t funct3 = decode_extract_funct3(instr);
@@ -183,10 +181,10 @@ static void execR(struct hart_hart *hart, uint32_t instr) {
 			result = (uint32_t)((uint64_t)((int64_t)v0 * (int64_t)v1) >> 32);
 		} else if (funct3 == 0x2) {
 			trace(hart->pc, "mulhsu x%d, x%d, x%d\n", rd, rs1, rs2);
-			notImplemented("mulhsu x%d, x%d, x%d", rd, rs1, rs2);
+			result = (uint32_t)((uint64_t)((int64_t)v0 * (int64_t)(uint64_t)v1) >> 32);
 		} else if (funct3 == 0x3) {
 			trace(hart->pc, "mulhu x%d, x%d, x%d\n", rd, rs1, rs2);
-			notImplemented("mulhu x%d, x%d, x%d\n", rd, rs1, rs2);
+			result = (uint32_t)((uint64_t)v0 * (uint64_t)v1 >> 32);
 		} else if (funct3 == 0x4) {
 			trace(hart->pc, "div x%d, x%d, x%d\n", rd, rs1, rs2);
 			result = v0 / v1;
@@ -223,6 +221,7 @@ static void execR(struct hart_hart *hart, uint32_t instr) {
 		result = v0 >> (uint8_t)v1;
 	} else if (funct3 == 0x5 && funct7 == 0x20) {
 		trace(hart->pc, "sra x%d, x%d, x%d\n", rd, rs1, rs2);
+		result = (uint32_t)((uint64_t)(int64_t)v0 >> (uint8_t)v1);
 	} else if (funct3 == 0x6) {
 		trace(hart->pc, "or x%d, x%d, x%d\n", rd, rs1, rs2);
 		result = v0 | v1;
@@ -370,7 +369,7 @@ static void csr_rwi(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t im
 static void csr_rsi(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t imm);
 static void csr_rci(struct hart_hart *hart, uint16_t csr, uint8_t rd, uint8_t imm);
 
-static void execSystem(struct hart_hart *hart, uint32_t instr) {
+static uint32_t execSystem(struct hart_hart *hart, uint32_t instr, uint32_t nexpc) {
 	const uint8_t funct3 = decode_extract_funct3(instr);
 	const uint8_t rd = decode_extract_rd(instr);
 	const uint8_t rs1 = decode_extract_rs1(instr);
@@ -385,7 +384,7 @@ static void execSystem(struct hart_hart *hart, uint32_t instr) {
 		const uint32_t mcause = hart_getCsr(hart, CSR_MCAUSE_REGNO);
 		const uint32_t mtval = hart_getCsr(hart, CSR_MTVAL_REGNO);
 		printf("MRET: hart #%d, mepc=%08X, mcause=%08X, mtval=%08X\n", hart_getCsr(hart, CSR_MHARTID_REGNO), mepc, mcause, mtval);
-		hart->pc = mepc;
+		return mepc;
 	} else if (instr == INSTR_EBREAK) {
 		trace(hart->pc, "ebreak\n");
 		printf("EBREAK: hart #%d\n", hart_getCsr(hart, CSR_MHARTID_REGNO));
@@ -408,6 +407,7 @@ static void execSystem(struct hart_hart *hart, uint32_t instr) {
 		trace(hart->pc, "UNKNOWN SYSTEM INSTRUCTION: 0x%x\n", instr);
 		hart->end = true;
 	}
+	return nexpc;
 }
 
 

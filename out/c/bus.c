@@ -35,6 +35,14 @@ uint32_t bus_read(uint32_t adr, uint8_t size) {
 		void *const romPtr = (void *)&rom[adr - ROM_START];
 		return readFrom(romPtr, adr, size);
 	} else if (isAdressInRegion(adr, (struct __anonymous_struct_1)MMIO_REGION)) {
+		const uint32_t mmioAdr = adr - MMIO_START;
+		if (size == 1) {
+			return (uint32_t)mmio_read8(mmioAdr);
+		} else if (size == 2) {
+			return (uint32_t)mmio_read16(mmioAdr);
+		} else if (size == 4) {
+			return mmio_read32(mmioAdr);
+		}
 	} else {
 		bus_memoryViolation('r', adr);
 	}

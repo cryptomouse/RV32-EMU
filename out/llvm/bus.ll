@@ -273,6 +273,37 @@ else_1:
 	%20 = call %Bool @isAdressInRegion(%Nat32 %adr, {%Nat32,%Nat32} %19)
 	br %Bool %20 , label %then_2, label %else_2
 then_2:
+	%21 = sub %Nat32 %adr, 4027318272
+; if_3
+	%22 = icmp eq %Nat8 %size, 1
+	br %Bool %22 , label %then_3, label %else_3
+then_3:
+	%23 = call %Word8 @mmio_read8(%Nat32 %21)
+	%24 = zext %Word8 %23 to %Word32
+	ret %Word32 %24
+	br label %endif_3
+else_3:
+; if_4
+	%26 = icmp eq %Nat8 %size, 2
+	br %Bool %26 , label %then_4, label %else_4
+then_4:
+	%27 = call %Word16 @mmio_read16(%Nat32 %21)
+	%28 = zext %Word16 %27 to %Word32
+	ret %Word32 %28
+	br label %endif_4
+else_4:
+; if_5
+	%30 = icmp eq %Nat8 %size, 4
+	br %Bool %30 , label %then_5, label %endif_5
+then_5:
+	%31 = call %Word32 @mmio_read32(%Nat32 %21)
+	ret %Word32 %31
+	br label %endif_5
+endif_5:
+	br label %endif_4
+endif_4:
+	br label %endif_3
+endif_3:
 	br label %endif_2
 else_2:
 	call void @bus_memoryViolation(%Char8 114, %Nat32 %adr)
@@ -282,8 +313,8 @@ endif_2:
 endif_1:
 	br label %endif_0
 endif_0:
-	%21 = zext i8 0 to %Word32
-	ret %Word32 %21
+	%33 = zext i8 0 to %Word32
+	ret %Word32 %33
 }
 
 define void @bus_write(%Nat32 %adr, %Word32 %value, %Nat8 %size) {

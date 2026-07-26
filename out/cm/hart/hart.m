@@ -142,7 +142,7 @@ func exec (hart: *Hart, instr: Word32) -> Unit {
 	} else if op == opS {
 		execS(hart, instr)
 	} else if op == opSYSTEM {
-		execSystem(hart, instr)
+		nexpc = execSystem(hart, instr, nexpc)
 	} else if op == opFENCE {
 		execFence(hart, instr)
 	} else {
@@ -193,7 +193,7 @@ func execI (hart: *Hart, instr: Word32) -> Unit {
 	} else if funct3 == 5 and funct7 == 0x20 {
 		trace(hart.pc, "srai x%d, x%d, %d\n", rd, rs1, imm)
 
-		result = hart.regs[rs1] >> unsafe Nat8 imm
+		result = unsafe Word32 (unsafe Word64 (unsafe Int64 hart.regs[rs1]) >> unsafe Nat8 imm)
 	} else if funct3 == 6 {
 		trace(hart.pc, "ori x%d, x%d, %d\n", rd, rs1, imm)
 
@@ -235,11 +235,11 @@ func execR (hart: *Hart, instr: Word32) -> Unit {
 		} else if funct3 == 2 {
 			trace(hart.pc, "mulhsu x%d, x%d, x%d\n", rd, rs1, rs2)
 
-			notImplemented("mulhsu x%d, x%d, x%d", rd, rs1, rs2)
+			result = unsafe Word32 (unsafe Word64 (unsafe Int64 v0 * unsafe Int64 (unsafe Nat64 v1)) >> 32)
 		} else if funct3 == 3 {
 			trace(hart.pc, "mulhu x%d, x%d, x%d\n", rd, rs1, rs2)
 
-			notImplemented("mulhu x%d, x%d, x%d\n", rd, rs1, rs2)
+			result = unsafe Word32 (unsafe Word64 (unsafe Nat64 v0 * unsafe Nat64 v1) >> 32)
 		} else if funct3 == 4 {
 			trace(hart.pc, "div x%d, x%d, x%d\n", rd, rs1, rs2)
 
@@ -293,6 +293,8 @@ func execR (hart: *Hart, instr: Word32) -> Unit {
 	} else if funct3 == 5 and funct7 == 0x20 {
 
 		trace(hart.pc, "sra x%d, x%d, x%d\n", rd, rs1, rs2)
+
+		result = unsafe Word32 (unsafe Word64 (unsafe Int64 v0) >> unsafe Nat8 v1)
 	} else if funct3 == 6 {
 		trace(hart.pc, "or x%d, x%d, x%d\n", rd, rs1, rs2)
 
@@ -499,7 +501,7 @@ func execS (hart: *Hart, instr: Word32) -> Unit {
 }
 
 
-func execSystem (hart: *Hart, instr: Word32) -> Unit {
+func execSystem (hart: *Hart, instr: Word32, nexpc: Nat32) -> Nat32 {
 	let funct3: Word8 = extract_funct3(instr)
 	let rd: Nat8 = extract_rd(instr)
 	let rs1: Nat8 = extract_rs1(instr)
@@ -517,8 +519,7 @@ func execSystem (hart: *Hart, instr: Word32) -> Unit {
 		printf("MRET: hart #%d, mepc=%08X, mcause=%08X, mtval=%08X\n"
 			getCsr(hart, csr.mhartid_regno)
 			mepc, mcause, mtval
-		)
-		hart.pc = Nat32 mepc
+		); return Nat32 mepc
 	} else if instr == instrEBREAK {
 		trace(hart.pc, "ebreak\n")
 		printf("EBREAK: hart #%d\n", getCsr(hart, csr.mhartid_regno))
@@ -541,6 +542,8 @@ func execSystem (hart: *Hart, instr: Word32) -> Unit {
 		trace(hart.pc, "UNKNOWN SYSTEM INSTRUCTION: 0x%x\n", instr)
 		hart.end = true
 	}
+
+	return nexpc
 }
 
 
