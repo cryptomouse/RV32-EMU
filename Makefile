@@ -19,11 +19,11 @@ all: LLVM
 
 
 LLVM:
-	mcc -o $(LLVMPREFIX)/main $(CM_OPTS) -mbackend=llvm $(INDIR)/main.m
-	mcc -o $(LLVMPREFIX)/hart/hart $(CM_OPTS) -mbackend=llvm $(INDIR)/hart/hart.m
-	mcc -o $(LLVMPREFIX)/hart/decode $(CM_OPTS) -mbackend=llvm $(INDIR)/hart/decode.m
-	mcc -o $(LLVMPREFIX)/bus $(CM_OPTS) -mbackend=llvm $(INDIR)/bus.m
-	mcc -o $(LLVMPREFIX)/mmio $(CM_OPTS) -mbackend=llvm $(INDIR)/mmio.m
+	modest -o $(LLVMPREFIX)/main $(CM_OPTS) -mbackend=llvm $(INDIR)/main.m
+	modest -o $(LLVMPREFIX)/hart/hart $(CM_OPTS) -mbackend=llvm $(INDIR)/hart/hart.m
+	modest -o $(LLVMPREFIX)/hart/decode $(CM_OPTS) -mbackend=llvm $(INDIR)/hart/decode.m
+	modest -o $(LLVMPREFIX)/bus $(CM_OPTS) -mbackend=llvm $(INDIR)/bus.m
+	modest -o $(LLVMPREFIX)/mmio $(CM_OPTS) -mbackend=llvm $(INDIR)/mmio.m
 	clang \
 		$(LLVMPREFIX)/main.ll \
 		$(LLVMPREFIX)/hart/hart.ll \
@@ -33,21 +33,21 @@ LLVM:
 
 
 CM:
-	mcc -o $(CMPREFIX)/main $(CM_OPTS) -mbackend=modest $(INDIR)/main.m
-	mcc -o $(CMPREFIX)/hart/hart $(CM_OPTS) -mbackend=modest $(INDIR)/hart/hart.m
-	mcc -o $(CMPREFIX)/hart/decode $(CM_OPTS) -mbackend=modest $(INDIR)/hart/decode.m
-	mcc -o $(CMPREFIX)/hart/csr $(CM_OPTS) -mbackend=modest $(INDIR)/hart/csr.m
-	mcc -o $(CMPREFIX)/bus $(CM_OPTS) -mbackend=modest $(INDIR)/bus.m
-	mcc -o $(CMPREFIX)/mmio $(CM_OPTS) -mbackend=modest $(INDIR)/mmio.m
+	modest -o $(CMPREFIX)/main $(CM_OPTS) -mbackend=modest $(INDIR)/main.m
+	modest -o $(CMPREFIX)/hart/hart $(CM_OPTS) -mbackend=modest $(INDIR)/hart/hart.m
+	modest -o $(CMPREFIX)/hart/decode $(CM_OPTS) -mbackend=modest $(INDIR)/hart/decode.m
+	modest -o $(CMPREFIX)/hart/csr $(CM_OPTS) -mbackend=modest $(INDIR)/hart/csr.m
+	modest -o $(CMPREFIX)/bus $(CM_OPTS) -mbackend=modest $(INDIR)/bus.m
+	modest -o $(CMPREFIX)/mmio $(CM_OPTS) -mbackend=modest $(INDIR)/mmio.m
 
 
 C:
-	mcc -o $(CPREFIX)/main $(CM_OPTS) -mbackend=c11 $(INDIR)/main.m
-	mcc -o $(CPREFIX)/hart/hart $(CM_OPTS) -mbackend=c11 $(CM_OPTS) $(INDIR)/hart/hart.m
-	mcc -o $(CPREFIX)/hart/csr $(CM_OPTS) $(COPTIONS) -mbackend=c11 $(INDIR)/hart/csr.m
-	mcc -o $(CPREFIX)/hart/decode $(CM_OPTS) -mbackend=c11 $(CM_OPTS) $(INDIR)/hart/decode.m
-	mcc -o $(CPREFIX)/bus $(CM_OPTS) $(CM_OPTS) -mbackend=c11 $(INDIR)/bus.m
-	mcc -o $(CPREFIX)/mmio $(CM_OPTS) $(CM_OPTS) -mbackend=c11 $(INDIR)/mmio.m
+	modest -o $(CPREFIX)/main $(CM_OPTS) -mbackend=c11 $(INDIR)/main.m
+	modest -o $(CPREFIX)/hart/hart $(CM_OPTS) -mbackend=c11 $(CM_OPTS) $(INDIR)/hart/hart.m
+	modest -o $(CPREFIX)/hart/csr $(CM_OPTS) $(COPTIONS) -mbackend=c11 $(INDIR)/hart/csr.m
+	modest -o $(CPREFIX)/hart/decode $(CM_OPTS) -mbackend=c11 $(CM_OPTS) $(INDIR)/hart/decode.m
+	modest -o $(CPREFIX)/bus $(CM_OPTS) $(CM_OPTS) -mbackend=c11 $(INDIR)/bus.m
+	modest -o $(CPREFIX)/mmio $(CM_OPTS) $(CM_OPTS) -mbackend=c11 $(INDIR)/mmio.m
 	CC $(C_OPTIONS) \
 		$(CPREFIX)/main.c \
 		$(CPREFIX)/hart/hart.c \

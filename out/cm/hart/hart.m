@@ -72,9 +72,9 @@ const funct3_CSRRSI = 5
 const funct3_CSRRCI = 6
 
 
-public const intSysTimer = 0x01
-public const intSysCall = 0x08
-public const intMemViolation = 0x0B
+public const intSysTimer: Word32 = 0x01
+public const intSysCall: Word32 = 0x08
+public const intMemViolation: Word32 = 0x0B
 
 
 public func init (hart: *Hart, id: Nat32, bus: *BusInterface) -> Unit {

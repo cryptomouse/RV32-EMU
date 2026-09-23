@@ -6,42 +6,42 @@ pragma public_module
 
 
 func extract_op (instr: Word32) -> Word8 {
-	return unsafe Word8 (instr & 0x7F)
+	return unsafe(Word8 (instr & 0x7F))
 }
 
 
 func extract_funct2 (instr: Word32) -> Word8 {
-	return unsafe Word8 ((instr >> 25) & 0x03)
+	return unsafe(Word8 ((instr >> 25) & 0x03))
 }
 
 
 func extract_funct3 (instr: Word32) -> Word8 {
-	return unsafe Word8 ((instr >> 12) & 0x07)
+	return unsafe(Word8 ((instr >> 12) & 0x07))
 }
 
 
 func extract_funct5 (instr: Word32) -> Word8 {
-	return unsafe Word8 ((instr >> 27) & 0x01F)
+	return unsafe(Word8 ((instr >> 27) & 0x01F))
 }
 
 
 func extract_rd (instr: Word32) -> Nat8 {
-	return unsafe Nat8 ((instr >> 7) & 0x1F)
+	return unsafe(Nat8 ((instr >> 7) & 0x1F))
 }
 
 
 func extract_rs1 (instr: Word32) -> Nat8 {
-	return unsafe Nat8 ((instr >> 15) & 0x1F)
+	return unsafe(Nat8 ((instr >> 15) & 0x1F))
 }
 
 
 func extract_rs2 (instr: Word32) -> Nat8 {
-	return unsafe Nat8 ((instr >> 20) & 0x1F)
+	return unsafe(Nat8 ((instr >> 20) & 0x1F))
 }
 
 
 func extract_funct7 (instr: Word32) -> Word8 {
-	return unsafe Word8 ((instr >> 25) & 0x7F)
+	return unsafe(Word8 ((instr >> 25) & 0x7F))
 }
 
 

@@ -1,20 +1,12 @@
-/*
- * RV32IM simple software implementation
- */
-
-pragma unsafe
-
 include "libc/ctypes"
 include "libc/stdio"
 include "libc/unistd"
 include "libc/stdlib"
-
 include "decode"
-
 import "csr"
 
 
-const traceMode = false
+const traceMode: Bool = false
 
 const instructionSize = 4
 
@@ -31,41 +23,37 @@ public type Hart = {
 
 
 public func interrupt (hart: *Hart, int_num: Word32) -> Unit {
-	// msb is set to 1 for interrupt, 0 for exception
 	setCsr(hart, csr.mcause_regno, 0x80000000 | int_num)
 	setCsr(hart, csr.mip_regno, 1)
 	setCsr(hart, csr.mtval_regno, 0)
-
-	// set mstatus.mie = 0
-	//hart.csrs[csr.mstatus_regno] = hart.csrs[csr.mstatus_regno] | (0 << 3)  // set MIE = 1
 }
 
 
 public type BusInterface = @public {
-	read  : *(adr: Nat32, size: Nat8) -> Word32
-	write : *(adr: Nat32, value: Word32, size: Nat8) -> Unit
+	read: *(adr: Nat32, size: Nat8) -> Word32
+	write: *(adr: Nat32, value: Word32, size: Nat8) -> Unit
 }
 
 
-const opL = 0x03      // load
-const opI = 0x13      // immediate
-const opS = 0x23      // store
-const opR = 0x33      // reg
-const opB = 0x63      // branch
+const opL = 0x03// load
+const opI = 0x13// immediate
+const opS = 0x23// store
+const opR = 0x33// reg
+const opB = 0x63// branch
 
-const opLUI = 0x37	  // load upper immediate
-const opAUIPC = 0x17  // add upper immediate to PC
-const opJAL = 0x6F	  // jump and link
-const opJALR = 0x67   // jump and link by register
+const opLUI = 0x37// load upper immediate
+const opAUIPC = 0x17// add upper immediate to PC
+const opJAL = 0x6F// jump and link
+const opJALR = 0x67// jump and link by register
 
-const opSYSTEM = 0x73 // system
-const opFENCE = 0x0F  // fence
+const opSYSTEM = 0x73// system
+const opFENCE = 0x0F// fence
 
 
-const instrECALL = Word32 opSYSTEM | 0x00000000
-const instrEBREAK = Word32 opSYSTEM | 0x00100000
-const instrPAUSE = Word32 opFENCE | 0x01000000
-const instrMRET = Word32 opSYSTEM | 0x30200073  // machine return from trap
+const instrECALL: Word32 = Word32 opSYSTEM | 0x00000000
+const instrEBREAK: Word32 = Word32 opSYSTEM | 0x00100000
+const instrPAUSE: Word32 = Word32 opFENCE | 0x01000000
+const instrMRET: Word32 = Word32 opSYSTEM | 0x30200073// machine return from trap
 
 // funct3 for CSR
 const funct3_CSRRW = 1
@@ -83,13 +71,14 @@ public const intMemViolation: Word32 = 0x0B
 
 public func init (hart: *Hart, id: Nat32, bus: *BusInterface) -> Unit {
 	printf("hart #%d init\n", id)
-	setCsr(hart, csr.mhartid_regno, Word32 id)  // MIE = 0
+	setCsr(hart, csr.mhartid_regno, Word32 id)
 	setCsr(hart, csr.misa_regno, csr.misa_xlen_32 | csr.misa_i | csr.misa_m)
 	hart.regs = []
 	hart.pc = 0
 	hart.bus = bus
 	hart.end = false
 }
+
 
 
 @inline
@@ -102,19 +91,16 @@ public func cycle (hart: *Hart) -> Bool {
 	if getCsr(hart, csr.mip_regno) != 0 {
 		trace(hart.pc, "\nmcause #%02X\n", getCsr(hart, csr.mcause_regno))
 		let adr = Nat32 getCsr(hart, csr.mtvec_regno)
-		//printf("ADR = %08X\n", adr)
 		setCsr(hart, csr.mepc_regno, Word32 hart.pc)
-		setCsr(hart, csr.mcause_regno, 0)  // interrupt cause
-		setCsr(hart, csr.mtval_regno, 0)   // interrupt value (address, etc.)
+		setCsr(hart, csr.mcause_regno, 0)
+		setCsr(hart, csr.mtval_regno, 0)
 		setCsr(hart, csr.mip_regno, 0)
 		hart.pc = adr
 	}
 
-	let instr = fetch(hart)
+	let instr: Word32 = fetch(hart)
 	exec(hart, instr)
-
-	// count mcycle
-	let mc = unsafe(*Nat32 &hart.csrs[csr.mcycle_regno])
+	let mc: *Nat32 = unsafe(*Nat32 &hart.csrs[csr.mcycle_regno])
 	++*mc
 
 	return not hart.end
@@ -122,12 +108,12 @@ public func cycle (hart: *Hart) -> Bool {
 
 
 func exec (hart: *Hart, instr: Word32) -> Unit {
-	let op = extract_op(instr)
-	let funct3 = extract_funct3(instr)
+	let op: Word8 = extract_op(instr)
+	let funct3: Word8 = extract_funct3(instr)
 
-	hart.regs[0] = 0  // R0 must be always zero
+	hart.regs[0] = 0
 
-	var nexpc = hart.pc + instructionSize
+	var nexpc: Nat32 = hart.pc + instructionSize
 
 	if op == opI {
 		execI(hart, instr)
@@ -161,69 +147,54 @@ func exec (hart: *Hart, instr: Word32) -> Unit {
 
 // Immediate instructions
 func execI (hart: *Hart, instr: Word32) -> Unit {
-	let funct3 = extract_funct3(instr)
-	let funct7 = extract_funct7(instr)
-	let imm = expand12(extract_imm12(instr))
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
+	let funct3: Word8 = extract_funct3(instr)
+	let funct7: Word8 = extract_funct7(instr)
+	let imm: Int32 = expand12(extract_imm12(instr))
+	let rd: Nat8 = extract_rd(instr)
+	let rs1: Nat8 = extract_rs1(instr)
 
 	var result: Word32 = 0
 
 	if funct3 == 0 {
-		// ADDI (Add immediate)
 
 		trace(hart.pc, "addi x%d, x%d, %d\n", rd, rs1, imm)
 
 		result = Word32 (Int32 hart.regs[rs1] + imm)
-
 	} else if funct3 == 1 and funct7 == 0 {
-		// SLLI is a logical left shift (zeros are shifted into the lower bits)
 
 		trace(hart.pc, "slli x%d, x%d, %d\n", rd, rs1, imm)
 
 		result = hart.regs[rs1] << unsafe(Nat8 imm)
-
 	} else if funct3 == 2 {
-		// SLTI - set [1 to rd if rs1] less than immediate
 
 		trace(hart.pc, "slti x%d, x%d, %d\n", rd, rs1, imm)
 
 		result = Word32 (Int32 hart.regs[rs1] < imm)
-
 	} else if funct3 == 3 {
 		trace(hart.pc, "sltiu x%d, x%d, %d\n", rd, rs1, imm)
 
 		result = Word32 (Nat32 hart.regs[rs1] < Nat32 imm)
-
 	} else if funct3 == 4 {
 		trace(hart.pc, "xori x%d, x%d, %d\n", rd, rs1, imm)
 
 		result = hart.regs[rs1] ^ Word32 imm
-
 	} else if funct3 == 5 and funct7 == 0 {
-		// SRLI is a logical right shift (zeros are shifted into the upper bits)
 		trace(hart.pc, "srli x%d, x%d, %d\n", rd, rs1, imm)
 
 		result = (hart.regs[rs1] >> unsafe(Nat8 imm))
-
 	} else if funct3 == 5 and funct7 == 0x20 {
-		// SRAI is an arithmetic right shift (the original sign bit is copied into the vacated upper bits)
 		trace(hart.pc, "srai x%d, x%d, %d\n", rd, rs1, imm)
 
-		result = unsafe(Word32 (Word64 (Int64 hart.regs[rs1]) >> unsafe(Nat8 imm)))
-
+		result = unsafe(Word32 (unsafe(Word64 (unsafe(Int64 hart.regs[rs1]))) >> unsafe(Nat8 imm)))
 	} else if funct3 == 6 {
 		trace(hart.pc, "ori x%d, x%d, %d\n", rd, rs1, imm)
 
 		result = hart.regs[rs1] | Word32 imm
-
 	} else if funct3 == 7 {
 		trace(hart.pc, "andi x%d, x%d, %d\n", rd, rs1, imm)
 
 		result = hart.regs[rs1] & Word32 imm
-
 	} else {
-		// ERROR: unknown instruction
 	}
 
 	hart.regs[rd] = result
@@ -232,132 +203,94 @@ func execI (hart: *Hart, instr: Word32) -> Unit {
 
 // Word32 to register
 func execR (hart: *Hart, instr: Word32) -> Unit {
-	let funct3 = extract_funct3(instr)
-	let funct7 = extract_funct7(instr)
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
-	let rs2 = extract_rs2(instr)
+	let funct3: Word8 = extract_funct3(instr)
+	let funct7: Word8 = extract_funct7(instr)
+	let rd: Nat8 = extract_rd(instr)
+	let rs1: Nat8 = extract_rs1(instr)
+	let rs2: Nat8 = extract_rs2(instr)
 
-	let v0 = hart.regs[rs1]
-	let v1 = hart.regs[rs2]
+	let v0: Word32 = hart.regs[rs1]
+	let v1: Word32 = hart.regs[rs2]
 
 	var result: Word32
 
 	if funct7 == 1 {
 
-		//
-		// "M" extension
-		//
-
 		if funct3 == 0 {
-			// MUL rd, rs1, rs2
 			trace(hart.pc, "mul x%d, x%d, x%d\n", rd, rs1, rs2)
 
 			result = Word32 (Int32 v0 * Int32 v1)
-
 		} else if funct3 == 1 {
-			// MULH rd, rs1, rs2
-			// Записывает в целевой регистр старшие биты
-			// которые бы не поместились в него при обычном умножении
 			trace(hart.pc, "mulh x%d, x%d, x%d\n", rd, rs1, rs2)
 
-			result = unsafe(Word32 (Word64 (Int64 v0 * Int64 v1) >> 32))
-
+			result = unsafe(Word32 (unsafe(Word64 (unsafe(Int64 v0) * unsafe(Int64 v1))) >> 32))
 		} else if funct3 == 2 {
-			// MULHSU rd, rs1, rs2
-			// mul high signed unsigned
 			trace(hart.pc, "mulhsu x%d, x%d, x%d\n", rd, rs1, rs2)
 
-			result = unsafe(Word32 (Word64 (Int64 v0 * Int64 (Nat64 v1)) >> 32))
-
+			result = unsafe(Word32 (unsafe(Word64 (unsafe(Int64 v0) * unsafe(Int64 (unsafe(Nat64 v1))))) >> 32))
 		} else if funct3 == 3 {
-			// MULHU rd, rs1, rs2 multiply unsigned high
 			trace(hart.pc, "mulhu x%d, x%d, x%d\n", rd, rs1, rs2)
 
-			result = unsafe(Word32 (Word64 (Nat64 v0 * Nat64 v1) >> 32))
-
+			result = unsafe(Word32 (unsafe(Word64 (unsafe(Nat64 v0) * unsafe(Nat64 v1))) >> 32))
 		} else if funct3 == 4 {
-			// DIV rd, rs1, rs2
 			trace(hart.pc, "div x%d, x%d, x%d\n", rd, rs1, rs2)
 
 			result = Word32 (Int32 v0 / Int32 v1)
-
 		} else if funct3 == 5 {
-			// DIVU rd, rs1, rs2
 			trace(hart.pc, "divu x%d, x%d, x%d\n", rd, rs1, rs2)
 
 			result = Word32 (Nat32 v0 / Nat32 v1)
-
 		} else if funct3 == 6 {
-			// REM rd, rs1, rs2
 			trace(hart.pc, "rem x%d, x%d, x%d\n", rd, rs1, rs2)
 
 			result = Word32 (Int32 v0 % Int32 v1)
-
 		} else if funct3 == 7 {
-			// REMU rd, rs1, rs2
 			trace(hart.pc, "remu x%d, x%d, x%d\n", rd, rs1, rs2)
 
 			result = Word32 (Nat32 v0 % Nat32 v1)
 		}
-
 	} else if funct3 == 0 and funct7 == 0x00 {
 		trace(hart.pc, "add x%d, x%d, x%d\n", rd, rs1, rs2)
 
 		result = Word32 (Int32 v0 + Int32 v1)
-
 	} else if funct3 == 0 and funct7 == 0x20 {
 		trace(hart.pc, "sub x%d, x%d, x%d\n", rd, rs1, rs2)
 
 		result = Word32 (Int32 v0 - Int32 v1)
-
 	} else if funct3 == 1 {
-		// shift left logical
 
 		trace(hart.pc, "sll x%d, x%d, x%d\n", rd, rs1, rs2)
 
 		result = v0 << unsafe(Nat8 v1)
-
 	} else if funct3 == 2 {
-		// set less than
 
 		trace(hart.pc, "slt x%d, x%d, x%d\n", rd, rs1, rs2)
 
 		result = Word32 (Int32 v0 < Int32 v1)
-
 	} else if funct3 == 3 {
-		// set less than unsigned
 
 		trace(hart.pc, "sltu x%d, x%d, x%d\n", rd, rs1, rs2)
 
 		result = Word32 (Nat32 v0 < Nat32 v1)
-
 	} else if funct3 == 4 {
-		// XOR
 
 		trace(hart.pc, "xor x%d, x%d, x%d\n", rd, rs1, rs2)
 
 		result = v0 ^ v1
-
 	} else if funct3 == 5 and funct7 == 0 {
-		// SRL - shift right logical
 
 		trace(hart.pc, "srl x%d, x%d, x%d\n", rd, rs1, rs2)
 
 		result = v0 >> unsafe(Nat8 v1)
-
 	} else if funct3 == 5 and funct7 == 0x20 {
-		// SRA - shift right arithmetical
 
 		trace(hart.pc, "sra x%d, x%d, x%d\n", rd, rs1, rs2)
 
-		result = unsafe(Word32 (Word64 (Int64 v0) >> unsafe(Nat8 v1)))
-
+		result = unsafe(Word32 (unsafe(Word64 (unsafe(Int64 v0))) >> unsafe(Nat8 v1)))
 	} else if funct3 == 6 {
 		trace(hart.pc, "or x%d, x%d, x%d\n", rd, rs1, rs2)
 
 		result = v0 | v1
-
 	} else if funct3 == 7 {
 		trace(hart.pc, "and x%d, x%d, x%d\n", rd, rs1, rs2)
 
@@ -370,8 +303,8 @@ func execR (hart: *Hart, instr: Word32) -> Unit {
 
 // Load upper immediate
 func execLUI (hart: *Hart, instr: Word32) -> Unit {
-	let imm = extract_imm31_12(instr)
-	let rd = extract_rd(instr)
+	let imm: Word32 = extract_imm31_12(instr)
+	let rd: Nat8 = extract_rd(instr)
 
 	trace(hart.pc, "lui x%d, 0x%X\n", rd, imm)
 
@@ -381,9 +314,9 @@ func execLUI (hart: *Hart, instr: Word32) -> Unit {
 
 // Add upper immediate to PC
 func execAUIPC (hart: *Hart, instr: Word32) -> Unit {
-	let imm = expand12(extract_imm31_12(instr))
-	let x = hart.pc + Nat32 (Word32 imm << 12)
-	let rd = extract_rd(instr)
+	let imm: Int32 = expand12(extract_imm31_12(instr))
+	let x: Nat32 = hart.pc + Nat32 (Word32 imm << 12)
+	let rd: Nat8 = extract_rd(instr)
 
 	trace(hart.pc, "auipc x%d, 0x%X\n", rd, imm)
 
@@ -394,9 +327,9 @@ func execAUIPC (hart: *Hart, instr: Word32) -> Unit {
 // Jump and link
 // Returns new PC value
 func execJAL (hart: *Hart, instr: Word32) -> Nat32 {
-	let rd = extract_rd(instr)
-	let raw_imm = extract_jal_imm(instr)
-	let imm = expand20(raw_imm)
+	let rd: Nat8 = extract_rd(instr)
+	let raw_imm: Word32 = extract_jal_imm(instr)
+	let imm: Int32 = expand20(raw_imm)
 
 	trace(hart.pc, "jal x%d, %d\n", rd, imm)
 
@@ -408,17 +341,14 @@ func execJAL (hart: *Hart, instr: Word32) -> Nat32 {
 // Jump and link (by register)
 // Returns new PC value
 func execJALR (hart: *Hart, instr: Word32) -> Nat32 {
-	let rs1 = extract_rs1(instr)
-	let rd = extract_rd(instr)
-	let imm = expand12(extract_imm12(instr))
+	let rs1: Nat8 = extract_rs1(instr)
+	let rd: Nat8 = extract_rd(instr)
+	let imm: Int32 = expand12(extract_imm12(instr))
 
 	trace(hart.pc, "jalr %d(x%d)\n", imm, rs1)
 
-	// rd <- pc + instructionSize
-	// pc <- (rs1 + imm) & ~1
-
-	let next_instr_ptr = hart.pc + instructionSize
-	let nexpc = Nat32 (Word32(Int32 hart.regs[rs1] + imm) & 0xFFFFFFFE)
+	let next_instr_ptr: Nat32 = hart.pc + instructionSize
+	let nexpc = Nat32 (Word32 (Int32 hart.regs[rs1] + imm) & 0xFFFFFFFE)
 	hart.regs[rd] = Word32 next_instr_ptr
 	return nexpc
 }
@@ -427,62 +357,51 @@ func execJALR (hart: *Hart, instr: Word32) -> Nat32 {
 // Branch instructions
 // Returns new PC value
 func execB (hart: *Hart, instr: Word32) -> Nat32 {
-	let funct3 = extract_funct3(instr)
-	let rs1 = extract_rs1(instr)
-	let rs2 = extract_rs2(instr)
-	let imm = extract_b_imm(instr)
-	let left = hart.regs[rs1]
-	let right = hart.regs[rs2]
+	let funct3: Word8 = extract_funct3(instr)
+	let rs1: Nat8 = extract_rs1(instr)
+	let rs2: Nat8 = extract_rs2(instr)
+	let imm: Int16 = extract_b_imm(instr)
+	let left: Word32 = hart.regs[rs1]
+	let right: Word32 = hart.regs[rs2]
 
-	var nexpc = hart.pc + instructionSize
+	var nexpc: Nat32 = hart.pc + instructionSize
 
 	if funct3 == 0 {
-		// BEQ - Branch if equal
 
 		trace(hart.pc, "beq x%d, x%d, %d\n", rs1, rs2, imm)
 
 		if left == right {
 			nexpc = Nat32 (Int32 hart.pc + Int32 imm)
 		}
-
 	} else if funct3 == 1 {
-		// BNE - Branch if not equal
 
 		trace(hart.pc, "bne x%d, x%d, %d\n", rs1, rs2, imm)
 
 		if left != right {
 			nexpc = Nat32 (Int32 hart.pc + Int32 imm)
 		}
-
 	} else if funct3 == 4 {
-		// BLT - Branch if less than (signed)
 
 		trace(hart.pc, "blt x%d, x%d, %d\n", rs1, rs2, imm)
 
 		if Int32 left < Int32 right {
 			nexpc = Nat32 (Int32 hart.pc + Int32 imm)
 		}
-
 	} else if funct3 == 5 {
-		// BGE - Branch if greater or equal (signed)
 
 		trace(hart.pc, "bge x%d, x%d, %d\n", rs1, rs2, imm)
 
 		if Int32 left >= Int32 right {
 			nexpc = Nat32 (Int32 hart.pc + Int32 imm)
 		}
-
 	} else if funct3 == 6 {
-		// BLTU - Branch if less than (unsigned)
 
 		trace(hart.pc, "bltu x%d, x%d, %d\n", rs1, rs2, imm)
 
 		if Nat32 left < Nat32 right {
 			nexpc = Nat32 (Int32 hart.pc + Int32 imm)
 		}
-
 	} else if funct3 == 7 {
-		// BGEU - Branch if greater or equal (unsigned)
 
 		trace(hart.pc, "bgeu x%d, x%d, %d\n", rs1, rs2, imm)
 
@@ -490,7 +409,6 @@ func execB (hart: *Hart, instr: Word32) -> Nat32 {
 			nexpc = Nat32 (Int32 hart.pc + Int32 imm)
 		}
 	} else {
-		// ERROR: unknown instruction
 	}
 
 	return nexpc
@@ -499,46 +417,37 @@ func execB (hart: *Hart, instr: Word32) -> Nat32 {
 
 // Load instructions
 func execL (hart: *Hart, instr: Word32) -> Unit {
-	let funct3 = extract_funct3(instr)
-	let imm = expand12(extract_imm12(instr))
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
-	let rs2 = extract_rs2(instr)
+	let funct3: Word8 = extract_funct3(instr)
+	let imm: Int32 = expand12(extract_imm12(instr))
+	let rd: Nat8 = extract_rd(instr)
+	let rs1: Nat8 = extract_rs1(instr)
+	let rs2: Nat8 = extract_rs2(instr)
 
 	let adr = Nat32 (Int32 hart.regs[rs1] + imm)
 
 	var result: Word32
 
 	if funct3 == 0 {
-		// LB (Load 8-bit signed integer value)
 
 		trace(hart.pc, "lb x%d, %d(x%d)\n", rd, imm, rs1)
 
 		result = hart.bus.read(adr, size=1)
-
 	} else if funct3 == 1 {
-		// LH (Load 16-bit signed integer value)
 
 		trace(hart.pc, "lh x%d, %d(x%d)\n", rd, imm, rs1)
 
 		result = hart.bus.read(adr, size=2)
-
 	} else if funct3 == 2 {
-		// LW (Load 32-bit signed integer value)
 
 		trace(hart.pc, "lw x%d, %d(x%d)\n", rd, imm, rs1)
 
 		result = hart.bus.read(adr, size=4)
-
 	} else if funct3 == 4 {
-		// LBU (Load 8-bit unsigned integer value)
 
 		trace(hart.pc, "lbu x%d, %d(x%d)\n", rd, imm, rs1)
 
 		result = hart.bus.read(adr, size=1)
-
 	} else if funct3 == 5 {
-		// LHU (Load 16-bit unsigned integer value)
 
 		trace(hart.pc, "lhu x%d, %d(x%d)\n", rd, imm, rs1)
 
@@ -551,39 +460,31 @@ func execL (hart: *Hart, instr: Word32) -> Unit {
 
 // Store instructions
 func execS (hart: *Hart, instr: Word32) -> Unit {
-	let funct3 = extract_funct3(instr)
-	let funct7 = extract_funct7(instr)
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
-	let rs2 = extract_rs2(instr)
+	let funct3: Word8 = extract_funct3(instr)
+	let funct7: Word8 = extract_funct7(instr)
+	let rd: Nat8 = extract_rd(instr)
+	let rs1: Nat8 = extract_rs1(instr)
+	let rs2: Nat8 = extract_rs2(instr)
 
 	let imm4to0 = Nat32 rd
 	let imm11to5 = Nat32 funct7
-	let _imm = (unsafe(Word32 imm11to5 << 5)) | unsafe(Word32 imm4to0)
-	let imm = expand12(_imm)
+	let _imm: Word32 = (unsafe(Word32 imm11to5) << 5) | unsafe(Word32 imm4to0)
+	let imm: Int32 = expand12(_imm)
 
 	let adr = Nat32 Word32 (Int32 hart.regs[rs1] + imm)
-	let val = hart.regs[rs2]
+	let val: Word32 = hart.regs[rs2]
 
 	if funct3 == 0 {
-		// SB (save 8-bit value)
-		// <source:reg>, <offset:12bit_imm>(<address:reg>)
 
 		trace(hart.pc, "sb x%d, %d(x%d)\n", rs2, imm, rs1)
 
 		hart.bus.write(adr, val, size=1)
-
 	} else if funct3 == 1 {
-		// SH (save 16-bit value)
-		// <source:reg>, <offset:12bit_imm>(<address:reg>)
 
 		trace(hart.pc, "sh x%d, %d(x%d)\n", rs2, imm, rs1)
 
 		hart.bus.write(adr, val, size=2)
-
 	} else if funct3 == 2 {
-		// SW (save 32-bit value)
-		// <source:reg>, <offset:12bit_imm>(<address:reg>)
 
 		trace(hart.pc, "sw x%d, %d(x%d)\n", rs2, imm, rs1)
 
@@ -593,49 +494,35 @@ func execS (hart: *Hart, instr: Word32) -> Unit {
 
 
 func execSystem (hart: *Hart, instr: Word32, nexpc: Nat32) -> Nat32 {
-	let funct3 = extract_funct3(instr)
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
-	let xcsr = unsafe(Nat16 extract_imm12(instr))
-
-	//printf("SYSTEM INSTRUCTION: 0x%08X\n", instr)
+	let funct3: Word8 = extract_funct3(instr)
+	let rd: Nat8 = extract_rd(instr)
+	let rs1: Nat8 = extract_rs1(instr)
+	let xcsr: Nat16 = unsafe(Nat16 extract_imm12(instr))
 
 	if instr == instrECALL {
 		trace(hart.pc, "ecall\n")
 		printf("ECALL: hart #%d\n", getCsr(hart, csr.mhartid_regno))
-		//
-		//hart.irq = hart.irq | intSysCall
 		setCsr(hart, csr.mip_regno, 1)
-
 	} else if instr == instrMRET {
 		trace(hart.pc, "mret\n")
-		// Machine return from trap
-		let mepc = getCsr(hart, csr.mepc_regno)
-		let mcause = getCsr(hart, csr.mcause_regno)
-		let mtval = getCsr(hart, csr.mtval_regno)
-		printf(
-			"MRET: hart #%d, mepc=%08X, mcause=%08X, mtval=%08X\n"
+		let mepc: Word32 = getCsr(hart, csr.mepc_regno)
+		let mcause: Word32 = getCsr(hart, csr.mcause_regno)
+		let mtval: Word32 = getCsr(hart, csr.mtval_regno)
+		printf("MRET: hart #%d, mepc=%08X, mcause=%08X, mtval=%08X\n"
 			getCsr(hart, csr.mhartid_regno)
 			mepc, mcause, mtval
-		)
-		return Nat32 mepc
-
+		); return Nat32 mepc
 	} else if instr == instrEBREAK {
 		trace(hart.pc, "ebreak\n")
 		printf("EBREAK: hart #%d\n", getCsr(hart, csr.mhartid_regno))
 		hart.end = true
-
-	// CSR instructions
 	} else if funct3 == funct3_CSRRW {
-		// CSR read & write
 		csr_rw(hart, xcsr, rd, rs1)
 	} else if funct3 == funct3_CSRRS {
-		// CSR read & set bit
-		let mask_reg = rs1
+		let mask_reg: Nat8 = rs1
 		csr_rs(hart, xcsr, rd, mask_reg)
 	} else if funct3 == funct3_CSRRC {
-		// CSR read & clear bit
-		let mask_reg = rs1
+		let mask_reg: Nat8 = rs1
 		csr_rc(hart, xcsr, rd, mask_reg)
 	} else if funct3 == funct3_CSRRWI {
 		csr_rwi(hart, xcsr, rd, imm=rs1)
@@ -673,8 +560,7 @@ public func setCsr (hart: *Hart, csrno: Nat16, value: Word32) -> Unit {
 The CSRRW (Atomic Read/Write CSR) instruction atomically swaps values in the CSRs and integer registers. CSRRW reads the old value of the CSR, zero-extends the value to XLEN bits, then writes it to integer register rd. The initial value in rs1 is written to the CSR. If rd=x0, then the instruction shall not read the CSR and shall not cause any of the side effects that might occur on a CSR read.
 */
 func csr_rw (hart: *Hart, csr: Nat16, rd: Nat8, rs1: Nat8) -> Unit {
-	//printf("CSR_RW(csr=0x%X, rd=r%d, rs1=r%d)\n", csr, rd, rs1)
-	let nv = hart.regs[rs1]
+	let nv: Word32 = hart.regs[rs1]
 	hart.regs[rd] = getCsr(hart, csr)
 	setCsr(hart, csr, nv)
 }
@@ -684,9 +570,7 @@ func csr_rw (hart: *Hart, csr: Nat16, rd: Nat8, rs1: Nat8) -> Unit {
 The CSRRS (Atomic Read and Set Bits in CSR) instruction reads the value of the CSR, zero-extends the value to XLEN bits, and writes it to integer register rd. The initial value in integer register rs1 is treated as a bit mask that specifies bit positions to be set in the CSR. Any bit that is high in rs1 will cause the corresponding bit to be set in the CSR, if that CSR bit is writable. Other bits in the CSR are not explicitly written.
 */
 func csr_rs (hart: *Hart, csr: Nat16, rd: Nat8, rs1: Nat8) -> Unit {
-	// csrrs rd, csr, rs
-	//printf("CSR_RS(csr=0x%X, rd=r%d, rs1=r%d)\n", csr, rd, rs1)
-	let set = hart.regs[rs1]
+	let set: Word32 = hart.regs[rs1]
 	hart.regs[rd] = getCsr(hart, csr)
 	setCsr(hart, csr, getCsr(hart, csr) | hart.regs[rs1])
 }
@@ -696,18 +580,15 @@ func csr_rs (hart: *Hart, csr: Nat16, rd: Nat8, rs1: Nat8) -> Unit {
 The CSRRC (Atomic Read and Clear Bits in CSR) instruction reads the value of the CSR, zero-extends the value to XLEN bits, and writes it to integer register rd. The initial value in integer register rs1 is treated as a bit mask that specifies bit positions to be cleared in the CSR. Any bit that is high in rs1 will cause the corresponding bit to be cleared in the CSR, if that CSR bit is writable. Other bits in the CSR are not explicitly written.
 */
 func csr_rc (hart: *Hart, csr: Nat16, rd: Nat8, rs1: Nat8) -> Unit {
-	// csrrc rd, csr, rs
-	//printf("CSR_RC(csr=0x%X, rd=r%d, rs1=r%d)\n", csr, rd, rs1)
-	let set = hart.regs[rs1]
+	let set: Word32 = hart.regs[rs1]
 	hart.regs[rd] = getCsr(hart, csr)
-	setCsr(hart, csr, getCsr(hart, csr) & ~hart.regs[rs1])
+	setCsr(hart, csr, getCsr(hart, csr) & not hart.regs[rs1])
 }
 
 
 // read+write immediate(5-bit)
 func csr_rwi (hart: *Hart, csr: Nat16, rd: Nat8, imm: Nat8) -> Unit {
 	let imm32 = Word32 imm
-	//printf("CSR_RWI(csr=0x%X, rd=r%d, imm=%0x%X)\n", csr, rd, imm32)
 	hart.regs[rd] = getCsr(hart, csr)
 	setCsr(hart, csr, imm32)
 }
@@ -716,7 +597,6 @@ func csr_rwi (hart: *Hart, csr: Nat16, rd: Nat8, imm: Nat8) -> Unit {
 // read+clear immediate(5-bit)
 func csr_rsi (hart: *Hart, csr: Nat16, rd: Nat8, imm: Nat8) -> Unit {
 	let imm32 = Word32 imm
-	//printf("CSR_RSI(csr=0x%X, rd=r%d, imm=%0x%X)\n", csr, rd, imm32)
 	hart.regs[rd] = getCsr(hart, csr)
 	setCsr(hart, csr, getCsr(hart, csr) | imm32)
 }
@@ -725,9 +605,8 @@ func csr_rsi (hart: *Hart, csr: Nat16, rd: Nat8, imm: Nat8) -> Unit {
 // read+clear immediate(5-bit)
 func csr_rci (hart: *Hart, csr: Nat16, rd: Nat8, imm: Nat8) -> Unit {
 	let imm32 = Word32 imm
-	//printf("CSR_RCI(csr=0x%X, rd=r%d, imm=%0x%X)\n", csr, rd, imm32)
 	hart.regs[rd] = getCsr(hart, csr)
-	setCsr(hart, csr, getCsr(hart, csr) & ~imm32)
+	setCsr(hart, csr, getCsr(hart, csr) & not imm32)
 }
 
 
@@ -737,19 +616,19 @@ func trace (pc: Nat32, form: *Str8, ...) -> Unit {
 		return
 	}
 
-	var va: __VA_List
+	var va: va_list
 	__va_start(va, form)
 	printf("[%08X] ", pc)
 	vprintf(form, va)
 	__va_end(va)
 
 	var c: Char8
-	scanf("%c", &c);
+	scanf("%c", &c)
 }
 
 
 func trace2 (pc: Nat32, form: *Str8, ...) -> Unit {
-	var va: __VA_List
+	var va: va_list
 	__va_start(va, form)
 	printf("[%08X] ", pc)
 	vprintf(form, va)
@@ -758,7 +637,7 @@ func trace2 (pc: Nat32, form: *Str8, ...) -> Unit {
 
 
 func fatal (form: *Str8, ...) -> Unit {
-	var va: __VA_List
+	var va: va_list
 	__va_start(va, form)
 	vprintf(form, va)
 	__va_end(va)
@@ -767,7 +646,7 @@ func fatal (form: *Str8, ...) -> Unit {
 
 
 func notImplemented (form: *Str8, ...) -> Unit {
-	var va: __VA_List
+	var va: va_list
 	__va_start(va, form)
 	printf("\n\nINSTRUCTION_NOT_IMPLEMENTED: \"")
 	vprintf(form, va)
@@ -780,11 +659,10 @@ func notImplemented (form: *Str8, ...) -> Unit {
 public func show_regs (hart: *Hart) -> Unit {
 	var i = Nat16 0
 	while i < 16 {
-	printf("x%02d = 0x%08x", i, hart.regs[i])
-	printf("    ")
-	printf("x%02d = 0x%08x\n", i + 16, hart.regs[i + 16])
+		printf("x%02d = 0x%08x", i, hart.regs[i])
+		printf("    ")
+		printf("x%02d = 0x%08x\n", i + 16, hart.regs[i + 16])
 		i = i + 1
 	}
 }
-
 

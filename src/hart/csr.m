@@ -9,30 +9,30 @@ pragma public_module
 // see: https://five-embeddev.com/riscv-isa-manual/latest/priv-csrs.html
 //
 
-const mstatus_regno = 0x300     // Machine status register
-const misa_regno = 0x301        // ISA and extensions
-const medeleg_regno = 0x302     // Machine exception delegation register
-const mideleg_regno = 0x303     // Machine interrupt delegation register
-const mie_regno = 0x304         // Machine interrupt-enable register
-const mtvec_regno = 0x305       // Machine trap-handler base address
-const mcounteren_regno = 0x306  // Machine counter enable
+const mstatus_regno: Nat16 = 0x300     // Machine status register
+const misa_regno: Nat16 = 0x301        // ISA and extensions
+const medeleg_regno: Nat16 = 0x302     // Machine exception delegation register
+const mideleg_regno: Nat16 = 0x303     // Machine interrupt delegation register
+const mie_regno: Nat16 = 0x304         // Machine interrupt-enable register
+const mtvec_regno: Nat16 = 0x305       // Machine trap-handler base address
+const mcounteren_regno: Nat16 = 0x306  // Machine counter enable
 
-const mscratch_regno = 0x340
-const mepc_regno = 0x341
-const mcause_regno = 0x342
-const mtval_regno = 0x343
-const mip_regno = 0x344
+const mscratch_regno: Nat16 = 0x340
+const mepc_regno: Nat16 = 0x341
+const mcause_regno: Nat16 = 0x342
+const mtval_regno: Nat16 = 0x343
+const mip_regno: Nat16 = 0x344
 
-const mcycle_regno = 0xB00
-const minstret_regno = 0xB02
-const mcycleh_regno = 0xB80
-const minstreth_regno = 0xB82
+const mcycle_regno: Nat16 = 0xB00
+const minstret_regno: Nat16 = 0xB02
+const mcycleh_regno: Nat16 = 0xB80
+const minstreth_regno: Nat16 = 0xB82
 
-const mvendorid_regno = 0xF11
-const marchid_regno = 0xF12
-const mimpid_regno = 0xF13
-const mhartid_regno = 0xF14
-const mconfigptr_regno = 0xF15
+const mvendorid_regno: Nat16 = 0xF11
+const marchid_regno: Nat16 = 0xF12
+const mimpid_regno: Nat16 = 0xF13
+const mhartid_regno: Nat16 = 0xF14
+const mconfigptr_regno: Nat16 = 0xF15
 
 
 

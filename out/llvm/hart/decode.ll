@@ -1,6 +1,6 @@
 
 target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx12.0.0"
+target triple = "arm64-apple-macosx27.0.0"
 
 
 %Unit = type i1
@@ -27,6 +27,7 @@ target triple = "arm64-apple-macosx12.0.0"
 %Nat64 = type i64
 %Nat128 = type i128
 %Nat256 = type i256
+%Float16 = type half
 %Float32 = type float
 %Float64 = type double
 %Fixed32 = type i32
@@ -44,71 +45,6 @@ declare i8* @llvm.stacksave()
 
 declare void @llvm.stackrestore(i8*)
 
-
-
-%CPU.Word = type i64
-define weak i1 @memeq(i8* %mem0, i8* %mem1, i64 %len) {
-	%1 = udiv i64 %len, 8
-	%2 = bitcast i8* %mem0 to [0 x %CPU.Word]*
-	%3 = bitcast i8* %mem1 to [0 x %CPU.Word]*
-	%4 = alloca i64
-	store i64 0, i64* %4
-	br label %again_1
-again_1:
-	%5 = load i64, i64* %4
-	%6 = icmp ult i64 %5, %1
-	br i1 %6 , label %body_1, label %break_1
-body_1:
-	%7 = load i64, i64* %4
-	%8 = getelementptr inbounds [0 x %CPU.Word], [0 x %CPU.Word]* %2, i32 0, i64 %7
-	%9 = load %CPU.Word, %CPU.Word* %8
-	%10 = load i64, i64* %4
-	%11 = getelementptr inbounds [0 x %CPU.Word], [0 x %CPU.Word]* %3, i32 0, i64 %10
-	%12 = load %CPU.Word, %CPU.Word* %11
-	%13 = icmp ne %CPU.Word %9, %12
-	br i1 %13 , label %then_0, label %endif_0
-then_0:
-	ret i1 0
-	br label %endif_0
-endif_0:
-	%15 = load i64, i64* %4
-	%16 = add i64 %15, 1
-	store i64 %16, i64* %4
-	br label %again_1
-break_1:
-	%17 = urem i64 %len, 8
-	%18 = load i64, i64* %4
-	%19 = getelementptr inbounds [0 x %CPU.Word], [0 x %CPU.Word]* %2, i32 0, i64 %18
-	%20 = bitcast %CPU.Word* %19 to [0 x i8]*
-	%21 = load i64, i64* %4
-	%22 = getelementptr inbounds [0 x %CPU.Word], [0 x %CPU.Word]* %3, i32 0, i64 %21
-	%23 = bitcast %CPU.Word* %22 to [0 x i8]*
-	store i64 0, i64* %4
-	br label %again_2
-again_2:
-	%24 = load i64, i64* %4
-	%25 = icmp ult i64 %24, %17
-	br i1 %25 , label %body_2, label %break_2
-body_2:
-	%26 = load i64, i64* %4
-	%27 = getelementptr inbounds [0 x i8], [0 x i8]* %20, i32 0, i64 %26
-	%28 = load i8, i8* %27
-	%29 = load i64, i64* %4
-	%30 = getelementptr inbounds [0 x i8], [0 x i8]* %23, i32 0, i64 %29
-	%31 = load i8, i8* %30
-	%32 = icmp ne i8 %28, %31
-	br i1 %32 , label %then_1, label %endif_1
-then_1:
-	ret i1 0
-	br label %endif_1
-endif_1:
-	%34 = load i64, i64* %4
-	%35 = add i64 %34, 1
-	store i64 %35, i64* %4
-	br label %again_2
-break_2:
-	ret i1 1
-}
 
 ; MODULE: decode
 
@@ -229,9 +165,9 @@ define %Int16 @decode_extract_b_imm(%Word32 %instr) {
 	%18 = zext i8 6 to %Word16
 	%19 = shl %Word16 %17, %18
 	%20 = alloca %Word16, align 2
-	%21 = or %Word16 %10, %5
-	%22 = or %Word16 %14, %21
-	%23 = or %Word16 %19, %22
+	%21 = or %Word16 %19, %14
+	%22 = or %Word16 %21, %10
+	%23 = or %Word16 %22, %5
 	store %Word16 %23, %Word16* %20
 ; if_0
 	%24 = load %Word16, %Word16* %20
@@ -277,9 +213,9 @@ define %Word32 @decode_extract_jal_imm(%Word32 %instr) {
 	%23 = and %Word32 %21, %22
 	%24 = zext i8 20 to %Word32
 	%25 = shl %Word32 %23, %24
-	%26 = or %Word32 %13, %19
-	%27 = or %Word32 %7, %26
-	%28 = or %Word32 %25, %27
+	%26 = or %Word32 %25, %7
+	%27 = or %Word32 %26, %13
+	%28 = or %Word32 %27, %19
 	ret %Word32 %28
 }
 

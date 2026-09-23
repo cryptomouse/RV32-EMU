@@ -1,5 +1,3 @@
-import "builtin"
-
 //
 // CSR's
 // see: https://five-embeddev.com/riscv-isa-manual/latest/priv-csrs.html
