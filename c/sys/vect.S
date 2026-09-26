@@ -9,7 +9,7 @@
 .global _start
 
 
-.section .isr_vector
+.section .isr_vector, "ax"
 .align 8
 
 vectors:

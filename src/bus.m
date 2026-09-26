@@ -27,8 +27,8 @@ const mmioStart = Nat32 0xF00C0000
 const mmioEnd = mmioStart + mmioSize
 
 
-const ramRegion = {from=ramStart, to=ramEnd}
-const romRegion = {from=romStart, to=romEnd}
+const ramRegion  = {from=ramStart, to=ramEnd}
+const romRegion  = {from=romStart, to=romEnd}
 const mmioRegion = {from=mmioStart, to=mmioEnd}
 
 

@@ -8,4 +8,5 @@
 // see: https://five-embeddev.com/riscv-isa-manual/latest/priv-csrs.html
 //
 // Machine counter enable
+// Previous MIE (saved on trap entry)
 

@@ -30,6 +30,11 @@ public const mconfigptr_regno: Nat16 = 0xF15
 
 
 
+// MSTATUS fields
+public const mstatus_mie: Word32 = Word32 1 << 3// Machine interrupt enable
+public const mstatus_mpie: Word32 = Word32 1 << 7// Previous MIE (saved on trap entry)
+
+
 // MISA fields
 public const misa_a: Word32 = Word32 1 << 0
 public const misa_b: Word32 = Word32 1 << 1

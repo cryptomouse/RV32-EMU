@@ -84,6 +84,9 @@ int print(const char *str, ...) {
 	return 0;
 }
 
+// printf - alias for print (print is used by m2 code, printf by C code)
+int printf(const char *str, ...) __attribute__((alias("print")));
+
 
 char *sprintf_hex32(char *buf, int d) {
 	char cc[8] = {0};

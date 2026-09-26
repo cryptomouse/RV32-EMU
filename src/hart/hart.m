@@ -31,13 +31,28 @@ public type Hart = {
 
 
 public func interrupt (hart: *Hart, int_num: Word32) -> Unit {
-	// msb is set to 1 for interrupt, 0 for exception
-	setCsr(hart, csr.mcause_regno, 0x80000000 | int_num)
-	setCsr(hart, csr.mip_regno, 1)
+	// only mark interrupt as pending (mip bit #int_num);
+	// it will be taken in cycle() if enabled by mstatus.MIE & mie
+	let mask = Word32 1 << unsafe(Nat8 int_num)
+	setCsr(hart, csr.mip_regno, getCsr(hart, csr.mip_regno) | mask)
+}
+
+
+// Enter trap: save epc & cause, push MIE to MPIE and disable interrupts.
+// Returns trap handler address (mtvec, direct mode)
+func trap (hart: *Hart, cause: Word32, epc: Nat32) -> Nat32 {
+	let mstatus = getCsr(hart, csr.mstatus_regno)
+	var new_mstatus = mstatus & ~(csr.mstatus_mie | csr.mstatus_mpie)
+	if (mstatus & csr.mstatus_mie) != 0 {
+		new_mstatus = new_mstatus | csr.mstatus_mpie
+	}
+	setCsr(hart, csr.mstatus_regno, new_mstatus)
+
+	setCsr(hart, csr.mepc_regno, Word32 epc)
+	setCsr(hart, csr.mcause_regno, cause)
 	setCsr(hart, csr.mtval_regno, 0)
 
-	// set mstatus.mie = 0
-	//hart.csrs[csr.mstatus_regno] = hart.csrs[csr.mstatus_regno] | (0 << 3)  // set MIE = 1
+	return Nat32 (getCsr(hart, csr.mtvec_regno) & ~Word32 3)
 }
 
 
@@ -71,9 +86,9 @@ const instrMRET = Word32 opSYSTEM | 0x30200073  // machine return from trap
 const funct3_CSRRW = 1
 const funct3_CSRRS = 2
 const funct3_CSRRC = 3
-const funct3_CSRRWI = 4
-const funct3_CSRRSI = 5
-const funct3_CSRRCI = 6
+const funct3_CSRRWI = 5
+const funct3_CSRRSI = 6
+const funct3_CSRRCI = 7
 
 
 public const intSysTimer: Word32 = 0x01
@@ -99,15 +114,22 @@ func fetch (hart: *Hart) -> Word32 {
 
 
 public func cycle (hart: *Hart) -> Bool {
-	if getCsr(hart, csr.mip_regno) != 0 {
-		trace(hart.pc, "\nmcause #%02X\n", getCsr(hart, csr.mcause_regno))
-		let adr = Nat32 getCsr(hart, csr.mtvec_regno)
-		//printf("ADR = %08X\n", adr)
-		setCsr(hart, csr.mepc_regno, Word32 hart.pc)
-		setCsr(hart, csr.mcause_regno, 0)  // interrupt cause
-		setCsr(hart, csr.mtval_regno, 0)   // interrupt value (address, etc.)
-		setCsr(hart, csr.mip_regno, 0)
-		hart.pc = adr
+	// take pending interrupt only if it's enabled (mstatus.MIE & mie)
+	let pending = getCsr(hart, csr.mip_regno) & getCsr(hart, csr.mie_regno)
+	let mie_enabled = (getCsr(hart, csr.mstatus_regno) & csr.mstatus_mie) != 0
+	if mie_enabled and pending != 0 {
+		// select lowest pending interrupt
+		var int_num: Nat8 = 0
+		while (pending & (Word32 1 << int_num)) == 0 {
+			++int_num
+		}
+		let mask = Word32 1 << int_num
+		setCsr(hart, csr.mip_regno, getCsr(hart, csr.mip_regno) & ~mask)
+
+		// msb is set to 1 for interrupt, 0 for exception
+		let cause = 0x80000000 | Word32 int_num
+		trace(hart.pc, "\nmcause #%08X\n", cause)
+		hart.pc = trap(hart, cause, epc=hart.pc)
 	}
 
 	let instr = fetch(hart)
@@ -122,8 +144,8 @@ public func cycle (hart: *Hart) -> Bool {
 
 
 func exec (hart: *Hart, instr: Word32) -> Unit {
-	let op = extract_op(instr)
-	let funct3 = extract_funct3(instr)
+	let op = extractOp(instr)
+	let funct3 = extractFunct3(instr)
 
 	hart.regs[0] = 0  // R0 must be always zero
 
@@ -161,11 +183,11 @@ func exec (hart: *Hart, instr: Word32) -> Unit {
 
 // Immediate instructions
 func execI (hart: *Hart, instr: Word32) -> Unit {
-	let funct3 = extract_funct3(instr)
-	let funct7 = extract_funct7(instr)
-	let imm = expand12(extract_imm12(instr))
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
+	let funct3 = extractFunct3(instr)
+	let funct7 = extractFunct7(instr)
+	let imm = expand12(extractImm12(instr))
+	let rd = extractRd(instr)
+	let rs1 = extractRs1(instr)
 
 	var result: Word32 = 0
 
@@ -210,7 +232,7 @@ func execI (hart: *Hart, instr: Word32) -> Unit {
 		// SRAI is an arithmetic right shift (the original sign bit is copied into the vacated upper bits)
 		trace(hart.pc, "srai x%d, x%d, %d\n", rd, rs1, imm)
 
-		result = unsafe(Word32 (Word64 (Int64 hart.regs[rs1]) >> unsafe(Nat8 imm)))
+		result = Word32 (Word64 (Int64 hart.regs[rs1]) >> unsafe(Nat8 imm))
 
 	} else if funct3 == 6 {
 		trace(hart.pc, "ori x%d, x%d, %d\n", rd, rs1, imm)
@@ -232,11 +254,11 @@ func execI (hart: *Hart, instr: Word32) -> Unit {
 
 // Word32 to register
 func execR (hart: *Hart, instr: Word32) -> Unit {
-	let funct3 = extract_funct3(instr)
-	let funct7 = extract_funct7(instr)
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
-	let rs2 = extract_rs2(instr)
+	let funct3 = extractFunct3(instr)
+	let funct7 = extractFunct7(instr)
+	let rd = extractRd(instr)
+	let rs1 = extractRs1(instr)
+	let rs2 = extractRs2(instr)
 
 	let v0 = hart.regs[rs1]
 	let v1 = hart.regs[rs2]
@@ -261,20 +283,20 @@ func execR (hart: *Hart, instr: Word32) -> Unit {
 			// которые бы не поместились в него при обычном умножении
 			trace(hart.pc, "mulh x%d, x%d, x%d\n", rd, rs1, rs2)
 
-			result = unsafe(Word32 (Word64 (Int64 v0 * Int64 v1) >> 32))
+			result = Word32 (Word64 (Int64 v0 * Int64 v1) >> 32)
 
 		} else if funct3 == 2 {
 			// MULHSU rd, rs1, rs2
 			// mul high signed unsigned
 			trace(hart.pc, "mulhsu x%d, x%d, x%d\n", rd, rs1, rs2)
 
-			result = unsafe(Word32 (Word64 (Int64 v0 * Int64 (Nat64 v1)) >> 32))
+			result = Word32 (Word64 (Int64 v0 * Int64 (Nat64 v1)) >> 32)
 
 		} else if funct3 == 3 {
 			// MULHU rd, rs1, rs2 multiply unsigned high
 			trace(hart.pc, "mulhu x%d, x%d, x%d\n", rd, rs1, rs2)
 
-			result = unsafe(Word32 (Word64 (Nat64 v0 * Nat64 v1) >> 32))
+			result = Word32 (Word64 (Nat64 v0 * Nat64 v1) >> 32)
 
 		} else if funct3 == 4 {
 			// DIV rd, rs1, rs2
@@ -351,7 +373,7 @@ func execR (hart: *Hart, instr: Word32) -> Unit {
 
 		trace(hart.pc, "sra x%d, x%d, x%d\n", rd, rs1, rs2)
 
-		result = unsafe(Word32 (Word64 (Int64 v0) >> unsafe(Nat8 v1)))
+		result = Word32 (Word64 (Int64 v0) >> unsafe(Nat8 v1))
 
 	} else if funct3 == 6 {
 		trace(hart.pc, "or x%d, x%d, x%d\n", rd, rs1, rs2)
@@ -370,8 +392,8 @@ func execR (hart: *Hart, instr: Word32) -> Unit {
 
 // Load upper immediate
 func execLUI (hart: *Hart, instr: Word32) -> Unit {
-	let imm = extract_imm31_12(instr)
-	let rd = extract_rd(instr)
+	let imm = extractImm31_12(instr)
+	let rd = extractRd(instr)
 
 	trace(hart.pc, "lui x%d, 0x%X\n", rd, imm)
 
@@ -381,9 +403,9 @@ func execLUI (hart: *Hart, instr: Word32) -> Unit {
 
 // Add upper immediate to PC
 func execAUIPC (hart: *Hart, instr: Word32) -> Unit {
-	let imm = expand12(extract_imm31_12(instr))
+	let imm = expand12(extractImm31_12(instr))
 	let x = hart.pc + Nat32 (Word32 imm << 12)
-	let rd = extract_rd(instr)
+	let rd = extractRd(instr)
 
 	trace(hart.pc, "auipc x%d, 0x%X\n", rd, imm)
 
@@ -394,8 +416,8 @@ func execAUIPC (hart: *Hart, instr: Word32) -> Unit {
 // Jump and link
 // Returns new PC value
 func execJAL (hart: *Hart, instr: Word32) -> Nat32 {
-	let rd = extract_rd(instr)
-	let raw_imm = extract_jal_imm(instr)
+	let rd = extractRd(instr)
+	let raw_imm = extractJalImm(instr)
 	let imm = expand20(raw_imm)
 
 	trace(hart.pc, "jal x%d, %d\n", rd, imm)
@@ -408,9 +430,9 @@ func execJAL (hart: *Hart, instr: Word32) -> Nat32 {
 // Jump and link (by register)
 // Returns new PC value
 func execJALR (hart: *Hart, instr: Word32) -> Nat32 {
-	let rs1 = extract_rs1(instr)
-	let rd = extract_rd(instr)
-	let imm = expand12(extract_imm12(instr))
+	let rs1 = extractRs1(instr)
+	let rd = extractRd(instr)
+	let imm = expand12(extractImm12(instr))
 
 	trace(hart.pc, "jalr %d(x%d)\n", imm, rs1)
 
@@ -427,10 +449,10 @@ func execJALR (hart: *Hart, instr: Word32) -> Nat32 {
 // Branch instructions
 // Returns new PC value
 func execB (hart: *Hart, instr: Word32) -> Nat32 {
-	let funct3 = extract_funct3(instr)
-	let rs1 = extract_rs1(instr)
-	let rs2 = extract_rs2(instr)
-	let imm = extract_b_imm(instr)
+	let funct3 = extractFunct3(instr)
+	let rs1 = extractRs1(instr)
+	let rs2 = extractRs2(instr)
+	let imm = extractBImm(instr)
 	let left = hart.regs[rs1]
 	let right = hart.regs[rs2]
 
@@ -499,11 +521,11 @@ func execB (hart: *Hart, instr: Word32) -> Nat32 {
 
 // Load instructions
 func execL (hart: *Hart, instr: Word32) -> Unit {
-	let funct3 = extract_funct3(instr)
-	let imm = expand12(extract_imm12(instr))
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
-	let rs2 = extract_rs2(instr)
+	let funct3 = extractFunct3(instr)
+	let imm = expand12(extractImm12(instr))
+	let rd = extractRd(instr)
+	let rs1 = extractRs1(instr)
+	let rs2 = extractRs2(instr)
 
 	let adr = Nat32 (Int32 hart.regs[rs1] + imm)
 
@@ -551,15 +573,15 @@ func execL (hart: *Hart, instr: Word32) -> Unit {
 
 // Store instructions
 func execS (hart: *Hart, instr: Word32) -> Unit {
-	let funct3 = extract_funct3(instr)
-	let funct7 = extract_funct7(instr)
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
-	let rs2 = extract_rs2(instr)
+	let funct3 = extractFunct3(instr)
+	let funct7 = extractFunct7(instr)
+	let rd = extractRd(instr)
+	let rs1 = extractRs1(instr)
+	let rs2 = extractRs2(instr)
 
-	let imm4to0 = Nat32 rd
-	let imm11to5 = Nat32 funct7
-	let _imm = (unsafe(Word32 imm11to5 << 5)) | unsafe(Word32 imm4to0)
+	let imm4to0 = Word32 rd
+	let imm11to5 = Word32 funct7
+	let _imm = (imm11to5 << 5) | Word32 imm4to0
 	let imm = expand12(_imm)
 
 	let adr = Nat32 Word32 (Int32 hart.regs[rs1] + imm)
@@ -593,23 +615,32 @@ func execS (hart: *Hart, instr: Word32) -> Unit {
 
 
 func execSystem (hart: *Hart, instr: Word32, nexpc: Nat32) -> Nat32 {
-	let funct3 = extract_funct3(instr)
-	let rd = extract_rd(instr)
-	let rs1 = extract_rs1(instr)
-	let xcsr = unsafe(Nat16 extract_imm12(instr))
+	let funct3 = extractFunct3(instr)
+	let rd = extractRd(instr)
+	let rs1 = extractRs1(instr)
+	let xcsr = unsafe(Nat16 extractImm12(instr))
 
 	//printf("SYSTEM INSTRUCTION: 0x%08X\n", instr)
 
 	if instr == instrECALL {
 		trace(hart.pc, "ecall\n")
 		printf("ECALL: hart #%d\n", getCsr(hart, csr.mhartid_regno))
-		//
-		//hart.irq = hart.irq | intSysCall
-		setCsr(hart, csr.mip_regno, 1)
+		// synchronous exception: taken immediately, regardless of mstatus.MIE
+		// NOTE: mepc = next instruction (not ecall itself),
+		// so trap handler may just do mret without mepc += 4
+		return trap(hart, intSysCall, epc=nexpc)
 
 	} else if instr == instrMRET {
 		trace(hart.pc, "mret\n")
 		// Machine return from trap
+		// restore MIE from MPIE, set MPIE = 1
+		let mstatus = getCsr(hart, csr.mstatus_regno)
+		var new_mstatus = (mstatus & ~csr.mstatus_mie) | csr.mstatus_mpie
+		if (mstatus & csr.mstatus_mpie) != 0 {
+			new_mstatus = new_mstatus | csr.mstatus_mie
+		}
+		setCsr(hart, csr.mstatus_regno, new_mstatus)
+
 		let mepc = getCsr(hart, csr.mepc_regno)
 		let mcause = getCsr(hart, csr.mcause_regno)
 		let mtval = getCsr(hart, csr.mtval_regno)

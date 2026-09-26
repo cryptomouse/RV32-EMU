@@ -1,64 +1,74 @@
 //
 //
 
-pragma unsafe
 pragma public_module
 
 
-func extract_op (instr: Word32) -> Word8 {
-	return unsafe(Word8 (instr & 0x7F))
+@inline
+func bitmask32 (len: Nat8) -> Word32 {
+	return Word32 (Nat32 (Word32 1 << len) - 1)
 }
 
 
-func extract_funct2 (instr: Word32) -> Word8 {
-	return unsafe(Word8 ((instr >> 25) & 0x03))
+@inline
+func extract32 (value: Word32, pos: Nat8, len: Nat8) -> Word32 {
+	return (value >> (pos - len)) & bitmask32(len)
 }
 
 
-func extract_funct3 (instr: Word32) -> Word8 {
-	return unsafe(Word8 ((instr >> 12) & 0x07))
+func extractOp (instr: Word32) -> Word8 {
+	return Word8 extract32(value=instr, pos=7, len=7)
 }
 
 
-func extract_funct5 (instr: Word32) -> Word8 {
-	return unsafe(Word8 ((instr >> 27) & 0x01F))
+func extractFunct2 (instr: Word32) -> Word8 {
+	return Word8 extract32(value=instr, pos=25+2, len=2)
 }
 
 
-func extract_rd (instr: Word32) -> Nat8 {
-	return unsafe(Nat8 ((instr >> 7) & 0x1F))
+func extractFunct3 (instr: Word32) -> Word8 {
+	return Word8 extract32(value=instr, pos=12+3, len=3)
 }
 
 
-func extract_rs1 (instr: Word32) -> Nat8 {
-	return unsafe(Nat8 ((instr >> 15) & 0x1F))
+func extractFunct5 (instr: Word32) -> Word8 {
+	return Word8 extract32(value=instr, pos=27+6, len=6)
 }
 
 
-func extract_rs2 (instr: Word32) -> Nat8 {
-	return unsafe(Nat8 ((instr >> 20) & 0x1F))
+func extractRd (instr: Word32) -> Nat8 {
+	return Nat8 Word8 extract32(value=instr, pos=7+5, len=5)
 }
 
 
-func extract_funct7 (instr: Word32) -> Word8 {
-	return unsafe(Word8 ((instr >> 25) & 0x7F))
+func extractRs1 (instr: Word32) -> Nat8 {
+	return Nat8 Word8 extract32(value=instr, pos=15+5, len=5)
 }
 
 
-// bits: (31 .. 20)
-func extract_imm12 (instr: Word32) -> Word32 {
-	return (instr >> 20) & 0xFFF
+func extractRs2 (instr: Word32) -> Nat8 {
+	return Nat8 Word8 extract32(value=instr, pos=20+5, len=5)
 }
 
 
-func extract_imm31_12 (instr: Word32) -> Word32 {
-	return (instr >> 12) & 0xFFFFF
+func extractFunct7 (instr: Word32) -> Word8 {
+	return Word8 extract32(value=instr, pos=25+7, len=7)
 }
 
 
-func extract_b_imm (instr: Word32) -> Int16 {
-	let imm4to1_11 = Word16 extract_rd(instr)
-	let imm12_10to5 = extract_funct7(instr)
+func extractImm12 (instr: Word32) -> Word32 {
+	return extract32(value=instr, pos=20+12, len=12)
+}
+
+
+func extractImm31_12 (instr: Word32) -> Word32 {
+	return extract32(value=instr, pos=12+20, len=20)
+}
+
+
+func extractBImm (instr: Word32) -> Int16 {
+	let imm4to1_11 = Word16 extractRd(instr)
+	let imm12_10to5 = extractFunct7(instr)
 	let bit4to1 = imm4to1_11 & 0x1E
 	let bit10to5 = Word16 (imm12_10to5 & 0x3F) << 5
 	let bit11 = (imm4to1_11 & 0x1) << 11
@@ -75,8 +85,8 @@ func extract_b_imm (instr: Word32) -> Int16 {
 }
 
 
-func extract_jal_imm (instr: Word32) -> Word32 {
-	let imm = extract_imm31_12(instr)
+func extractJalImm (instr: Word32) -> Word32 {
+	let imm = extractImm31_12(instr)
 	let bit19to12_msk = ((imm >> 0) & 0xFF) << 12
 	let bit11_msk = ((imm >> 8) & 0x1) << 11
 	let bit10to1 = ((imm >> 9) & 0x3FF) << 1
