@@ -3,45 +3,46 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "bits32.h"
 
 uint8_t decode_extractOp(uint32_t instr) {
-	return (uint8_t)decode_extract32(instr, 7, 7);
+	return (uint8_t)bits32_extract(instr, 0, 7);
 }
 
 uint8_t decode_extractFunct2(uint32_t instr) {
-	return (uint8_t)decode_extract32(instr, 25 + 2, 2);
+	return (uint8_t)bits32_extract(instr, 25, 2);
 }
 
 uint8_t decode_extractFunct3(uint32_t instr) {
-	return (uint8_t)decode_extract32(instr, 12 + 3, 3);
+	return (uint8_t)bits32_extract(instr, 12, 3);
 }
 
 uint8_t decode_extractFunct5(uint32_t instr) {
-	return (uint8_t)decode_extract32(instr, 27 + 6, 6);
+	return (uint8_t)bits32_extract(instr, 27, 5);
 }
 
 uint8_t decode_extractRd(uint32_t instr) {
-	return (uint8_t)decode_extract32(instr, 7 + 5, 5);
+	return (uint8_t)bits32_extract(instr, 7, 5);
 }
 
 uint8_t decode_extractRs1(uint32_t instr) {
-	return (uint8_t)decode_extract32(instr, 15 + 5, 5);
+	return (uint8_t)bits32_extract(instr, 15, 5);
 }
 
 uint8_t decode_extractRs2(uint32_t instr) {
-	return (uint8_t)decode_extract32(instr, 20 + 5, 5);
+	return (uint8_t)bits32_extract(instr, 20, 5);
 }
 
 uint8_t decode_extractFunct7(uint32_t instr) {
-	return (uint8_t)decode_extract32(instr, 25 + 7, 7);
+	return (uint8_t)bits32_extract(instr, 25, 7);
 }
 
 uint32_t decode_extractImm12(uint32_t instr) {
-	return decode_extract32(instr, 20 + 12, 12);
+	return bits32_extract(instr, 20, 12);
 }
 
 uint32_t decode_extractImm31_12(uint32_t instr) {
-	return decode_extract32(instr, 12 + 20, 20);
+	return bits32_extract(instr, 12, 20);
 }
 
 int16_t decode_extractBImm(uint32_t instr) {
@@ -55,7 +56,7 @@ int16_t decode_extractBImm(uint32_t instr) {
 	if ((imm_bits & ((uint16_t)1 << 12)) != 0x0) {
 		imm_bits = 0xF000 | imm_bits;
 	}
-	return imm_bits;
+	return (int16_t)imm_bits;
 }
 
 uint32_t decode_extractJalImm(uint32_t instr) {
@@ -63,21 +64,21 @@ uint32_t decode_extractJalImm(uint32_t instr) {
 	const uint32_t bit19to12_msk = ((imm >> 0) & 0xFF) << 12;
 	const uint32_t bit11_msk = ((imm >> 8) & 0x1) << 11;
 	const uint32_t bit10to1 = ((imm >> 9) & 0x3FF) << 1;
-	const uint32_t bit20_msk = ((imm >> 20) & 0x1) << 20;
+	const uint32_t bit20_msk = ((imm >> 19) & 0x1) << 20;
 	return bit20_msk | bit19to12_msk | bit11_msk | bit10to1;
 }
 
 int32_t decode_expand12(uint32_t val_12bit) {
 	if ((val_12bit & 0x800) != 0x0) {
-		return (val_12bit | 0xFFFFF000UL);
+		return (int32_t)(val_12bit | 0xFFFFF000UL);
 	}
-	return val_12bit;
+	return (int32_t)val_12bit;
 }
 
 int32_t decode_expand20(uint32_t val_20bit) {
 	if ((val_20bit & 0x80000) != 0x0) {
-		return (val_20bit | 0xFFF00000UL);
+		return (int32_t)(val_20bit | 0xFFF00000UL);
 	}
-	return val_20bit;
+	return (int32_t)val_20bit;
 }
 

@@ -3,3 +3,4 @@
 *.o
 *dump.txt
 *.out
+c/sha256/gen/

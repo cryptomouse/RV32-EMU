@@ -1,29 +1,27 @@
 
-COMPILER_PATH=/opt/homebrew/opt/llvm@14/bin
+COMPILER_PATH=/opt/homebrew/opt/llvm/bin
 
 CC=$(COMPILER_PATH)/clang
-MACHINE = --target=riscv32 -march=rv32im
+MACHINE = --target=riscv32 -march=rv32i
 
-# Кароче, -nostdlib -fno-builtin -fno-builtin-memset не помогают
-# гребаный компайлер все равно норовит вызывать memset и невозможно отделаться!
+SYS=../sys
 
-CFLAGS = $(MACHINE)
+# $(SYS)/include - минимальные stdio.h/stdlib.h/string.h для кода из Modest
+CFLAGS = -O0 $(MACHINE) -isystem $(SYS)/include
+LDFLAGS = -fuse-ld=lld --ld-path=/opt/homebrew/opt/lld/bin/ld.lld
 
 # only-section=.isr  не поможет - эту секцию хрен продавишь, хз почему так
 ONLYSECTION=--only-section=.text --only-section=.data
 
-SYS=../sys
-
 LDSCRIPT = $(SYS)/mem.ld
 
+# Modest -> C (нужны MODEST_DIR и MODEST_LIB)
+MODEST = $(MODEST_DIR)/modest
+MODEST_OPTS = -mbackend=c11
+GEN = gen
+
 # compile C to BIN
-all:
-	# translate C to ASM
-	#$(CC) $(CFLAGS) -S main.c
-
-	# translate ASM to OBJ
-	#$(CC) $(CFLAGS) main.s -c -o main.o
-
+all: modest
 	$(CC) $(CFLAGS) $(SYS)/muldivmod.c -c -o muldivmod.o
 	$(CC) $(CFLAGS) $(SYS)/vect.S -c -o vect.o
 	$(CC) $(CFLAGS) $(SYS)/base.S -c -o base.o
@@ -31,22 +29,33 @@ all:
 	$(CC) $(CFLAGS) $(SYS)/system.c -c -o system.o
 	$(CC) $(CFLAGS) $(SYS)/console.c -c -o console.o
 	$(CC) $(CFLAGS) $(SYS)/printf.c -c -o printf.o
-	$(CC) $(CFLAGS) sha256.c -c -o sha256.o
-	$(CC) $(CFLAGS) main.c -c -o main.o
+	$(CC) $(CFLAGS) $(GEN)/sha256.c -c -o sha256.o
+	$(CC) $(CFLAGS) $(GEN)/bits32.c -c -o bits32.o
+	$(CC) $(CFLAGS) $(GEN)/main.c -c -o main.o
 
 
 	# link OBJects to ELF
-	$(CC) $(CFLAGS) -nostdlib -o main.elf -T $(LDSCRIPT) vect.o startup.o system.o console.o printf.o base.o muldivmod.o sha256.o main.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -nostdlib -o main.elf -T $(LDSCRIPT) vect.o startup.o system.o console.o printf.o base.o muldivmod.o sha256.o bits32.o main.o
 
 	rm *.o
 
 	# extract sections from ELF to BIN file
 
-	llvm-objcopy -Iriscv32 main.elf $(ONLYSECTION) -Obinary ../../image.bin
+	$(COMPILER_PATH)/llvm-objcopy -Iriscv32 main.elf $(ONLYSECTION) -Obinary ../../image.bin
 
 	# make ELF dump
-	llvm-objdump --full-contents --section=.text --section=.data -d ./main.elf > ./dump.txt
+	$(COMPILER_PATH)/llvm-objdump --full-contents --section=.text --section=.data -d ./main.elf > ./dump.txt
 
+
+# translate Modest to C
+modest:
+	$(MODEST) -o $(GEN)/sha256 $(MODEST_OPTS) $(MODEST_LIB)/misc/sha256.modest
+	$(MODEST) -o $(GEN)/bits32 $(MODEST_OPTS) $(MODEST_DIR)/lib/lightfood/bits32.modest
+	$(MODEST) -o $(GEN)/main $(MODEST_OPTS) main.modest
+
+
+clean:
+	rm -rf $(GEN) *.o main.elf dump.txt
 
 
 # show ELF content
@@ -67,3 +76,4 @@ symb:
 info:
 	objdump -x main.elf
 
+.PHONY: all modest clean dump sect symb info

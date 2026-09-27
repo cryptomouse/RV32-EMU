@@ -4,11 +4,13 @@
 # void memzero(void *mem, uint32_t len);
 .global memzero
 memzero:
+	beqz a1, memzero_exit	 # if (len == 0) return
 	add t0, a0, a1		 # t0 = mem + len
 memzero_loop:
 	sb zero, 0(a0)		 # *mem = 0
 	addi a0, a0, 1		 # mem = mem + 1
 	blt a0, t0, memzero_loop  # if (a0 < t0) goto zset_loop
+memzero_exit:
 	ret
 
 
@@ -16,11 +18,13 @@ memzero_loop:
 # void memset(void *mem, char x, uint32_t len);
 .global memset
 memset:
+	beqz a2, memset_exit	 # if (len == 0) return
 	add t0, a0, a2		 # t0 = mem + len
 memset_loop:
 	sb a1, 0(a0)		 # *mem = a1
 	addi a0, a0, 1		 # mem = mem + 1
 	blt a0, t0, memset_loop  # if (a0 < t0) goto memset_loop
+memset_exit:
 	ret
 
 
@@ -65,3 +69,22 @@ mcpy_exit:
 	ret
 
 
+
+
+
+# int memcmp(void *a, void *b, uint32_t len);
+.global memcmp
+memcmp:
+	add t2, a0, a2		  # t2 = a + len
+memcmp_loop:
+	beq a0, t2, memcmp_eq   # if (a == t2) return 0
+	lbu t0, 0(a0)		  # t0 = *a
+	lbu t1, 0(a1)		  # t1 = *b
+	addi a0, a0, 1		  # ++a
+	addi a1, a1, 1		  # ++b
+	beq t0, t1, memcmp_loop # if (t0 == t1) goto memcmp_loop
+	sub a0, t0, t1		  # return t0 - t1
+	ret
+memcmp_eq:
+	li a0, 0
+	ret

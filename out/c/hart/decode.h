@@ -1,19 +1,10 @@
 
 #if !defined(DECODE_H)
 #define DECODE_H
+#include "bits32.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
-
-__attribute__((always_inline))
-inline uint32_t decode_bitmask32(uint8_t len) {
-	return (((uint32_t)1 << len) - 1);
-}
-
-__attribute__((always_inline))
-inline uint32_t decode_extract32(uint32_t value, uint8_t pos, uint8_t len) {
-	return (value >> (pos - len)) & decode_bitmask32(len);
-}
 uint8_t decode_extractOp(uint32_t instr);
 uint8_t decode_extractFunct2(uint32_t instr);
 uint8_t decode_extractFunct3(uint32_t instr);

@@ -149,13 +149,13 @@ static void execI(struct hart_hart *hart, uint32_t instr) {
 	uint32_t result = 0;
 	if (funct3 == 0x0) {
 		trace(hart->pc, "addi x%d, x%d, %d\n", rd, rs1, imm);
-		result = (hart->regs[rs1] + imm);
+		result = ((int32_t)hart->regs[rs1] + imm);
 	} else if (funct3 == 0x1 && funct7 == 0x0) {
 		trace(hart->pc, "slli x%d, x%d, %d\n", rd, rs1, imm);
 		result = hart->regs[rs1] << (uint8_t)abs(imm);
 	} else if (funct3 == 0x2) {
 		trace(hart->pc, "slti x%d, x%d, %d\n", rd, rs1, imm);
-		result = (hart->regs[rs1] < imm);
+		result = ((int32_t)hart->regs[rs1] < imm);
 	} else if (funct3 == 0x3) {
 		trace(hart->pc, "sltiu x%d, x%d, %d\n", rd, rs1, imm);
 		result = (hart->regs[rs1] < (uint32_t)abs(imm));
@@ -191,7 +191,7 @@ static void execR(struct hart_hart *hart, uint32_t instr) {
 	if (funct7 == 0x1) {
 		if (funct3 == 0x0) {
 			trace(hart->pc, "mul x%d, x%d, x%d\n", rd, rs1, rs2);
-			result = (v0 * v1);
+			result = ((int32_t)v0 * (int32_t)v1);
 		} else if (funct3 == 0x1) {
 			trace(hart->pc, "mulh x%d, x%d, x%d\n", rd, rs1, rs2);
 			result = (uint32_t)((uint64_t)((int64_t)v0 * (int64_t)v1) >> 32);
@@ -203,29 +203,29 @@ static void execR(struct hart_hart *hart, uint32_t instr) {
 			result = (uint32_t)(((uint64_t)v0 * (uint64_t)v1) >> 32);
 		} else if (funct3 == 0x4) {
 			trace(hart->pc, "div x%d, x%d, x%d\n", rd, rs1, rs2);
-			result = (v0 / v1);
+			result = ((int32_t)v0 / (int32_t)v1);
 		} else if (funct3 == 0x5) {
 			trace(hart->pc, "divu x%d, x%d, x%d\n", rd, rs1, rs2);
 			result = (v0 / v1);
 		} else if (funct3 == 0x6) {
 			trace(hart->pc, "rem x%d, x%d, x%d\n", rd, rs1, rs2);
-			result = (v0 % v1);
+			result = ((int32_t)v0 % (int32_t)v1);
 		} else if (funct3 == 0x7) {
 			trace(hart->pc, "remu x%d, x%d, x%d\n", rd, rs1, rs2);
 			result = (v0 % v1);
 		}
 	} else if (funct3 == 0x0 && funct7 == 0x00) {
 		trace(hart->pc, "add x%d, x%d, x%d\n", rd, rs1, rs2);
-		result = (v0 + v1);
+		result = ((int32_t)v0 + (int32_t)v1);
 	} else if (funct3 == 0x0 && funct7 == 0x20) {
 		trace(hart->pc, "sub x%d, x%d, x%d\n", rd, rs1, rs2);
-		result = (v0 - v1);
+		result = ((int32_t)v0 - (int32_t)v1);
 	} else if (funct3 == 0x1) {
 		trace(hart->pc, "sll x%d, x%d, x%d\n", rd, rs1, rs2);
 		result = v0 << (uint8_t)v1;
 	} else if (funct3 == 0x2) {
 		trace(hart->pc, "slt x%d, x%d, x%d\n", rd, rs1, rs2);
-		result = (v0 < v1);
+		result = ((int32_t)v0 < (int32_t)v1);
 	} else if (funct3 == 0x3) {
 		trace(hart->pc, "sltu x%d, x%d, x%d\n", rd, rs1, rs2);
 		result = (v0 < v1);
@@ -279,7 +279,7 @@ static uint32_t execJALR(struct hart_hart *hart, uint32_t instr) {
 	const int32_t imm = decode_expand12(decode_extractImm12(instr));
 	trace(hart->pc, "jalr %d(x%d)\n", imm, rs1);
 	const uint32_t next_instr_ptr = hart->pc + INSTRUCTION_SIZE;
-	const uint32_t nexpc = ((uint32_t)(hart->regs[rs1] + imm) & 0xFFFFFFFEUL);
+	const uint32_t nexpc = ((uint32_t)((int32_t)hart->regs[rs1] + imm) & 0xFFFFFFFEUL);
 	hart->regs[rd] = next_instr_ptr;
 	return nexpc;
 }
@@ -304,12 +304,12 @@ static uint32_t execB(struct hart_hart *hart, uint32_t instr) {
 		}
 	} else if (funct3 == 0x4) {
 		trace(hart->pc, "blt x%d, x%d, %d\n", rs1, rs2, imm);
-		if (left < right) {
+		if ((int32_t)left < (int32_t)right) {
 			nexpc = ((int32_t)hart->pc + (int32_t)imm);
 		}
 	} else if (funct3 == 0x5) {
 		trace(hart->pc, "bge x%d, x%d, %d\n", rs1, rs2, imm);
-		if (left >= right) {
+		if ((int32_t)left >= (int32_t)right) {
 			nexpc = ((int32_t)hart->pc + (int32_t)imm);
 		}
 	} else if (funct3 == 0x6) {
@@ -333,7 +333,7 @@ static void execL(struct hart_hart *hart, uint32_t instr) {
 	const uint8_t rd = decode_extractRd(instr);
 	const uint8_t rs1 = decode_extractRs1(instr);
 	const uint8_t rs2 = decode_extractRs2(instr);
-	const uint32_t adr = (uint32_t)abs((hart->regs[rs1] + imm));
+	const uint32_t adr = (uint32_t)abs(((int32_t)hart->regs[rs1] + imm));
 	uint32_t result = 0x0;
 	if (funct3 == 0x0) {
 		trace(hart->pc, "lb x%d, %d(x%d)\n", rd, imm, rs1);
@@ -364,7 +364,7 @@ static void execS(struct hart_hart *hart, uint32_t instr) {
 	const uint32_t imm11to5 = (uint32_t)funct7;
 	const uint32_t _imm = (imm11to5 << 5) | imm4to0;
 	const int32_t imm = decode_expand12(_imm);
-	const uint32_t adr = (uint32_t)(hart->regs[rs1] + imm);
+	const uint32_t adr = (uint32_t)((int32_t)hart->regs[rs1] + imm);
 	const uint32_t val = hart->regs[rs2];
 	if (funct3 == 0x0) {
 		trace(hart->pc, "sb x%d, %d(x%d)\n", rs2, imm, rs1);

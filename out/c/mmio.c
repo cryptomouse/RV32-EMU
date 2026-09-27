@@ -33,7 +33,7 @@ void mmio_write16(uint32_t adr, uint16_t value) {
 
 void mmio_write32(uint32_t adr, uint32_t value) {
 	if (adr == CONSOLE_PUT_ADR) {
-		putchar(value);
+		putchar((int)value);
 		return;
 	} else if (adr == CONSOLE_PRINT_INT32_ADR) {
 		printf("%d", value);

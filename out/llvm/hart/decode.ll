@@ -55,86 +55,77 @@ declare void @llvm.stackrestore(i8*)
 ; from import "builtin"
 
 ; end from import "builtin"
+
+; from import "bits32"
+declare %Word32 @bits32_bitmask(%Nat8 %len)
+declare %Word32 @bits32_extract(%Word32 %value, %Nat8 %pos, %Nat8 %len)
+declare %Word32 @bits32_set(%Word32 %x, %Nat8 %no)
+declare %Word32 @bits32_reset(%Word32 %x, %Nat8 %no)
+declare %Word32 @bits32_switch(%Word32 %x, %Nat8 %no, %Bool %val)
+declare %Bool @bits32_check(%Word32 %x, %Nat8 %no)
+
+; end from import "bits32"
 ; -- end print imports 'decode' --
 ; -- strings --
 ; -- endstrings --
-define %Word32 @decode_bitmask32(%Nat8 %len) alwaysinline {
-	%1 = zext i8 1 to %Word32
-	%2 = zext %Nat8 %len to %Word32
-	%3 = shl %Word32 %1, %2
-	%4 = bitcast %Word32 %3 to %Nat32
-	%5 = sub %Nat32 %4, 1
-	%6 = bitcast %Nat32 %5 to %Word32
-	ret %Word32 %6
-}
-
-define %Word32 @decode_extract32(%Word32 %value, %Nat8 %pos, %Nat8 %len) alwaysinline {
-	%1 = sub %Nat8 %pos, %len
-	%2 = zext %Nat8 %1 to %Word32
-	%3 = lshr %Word32 %value, %2
-	%4 = call %Word32 @decode_bitmask32(%Nat8 %len)
-	%5 = and %Word32 %3, %4
-	ret %Word32 %5
-}
-
 define %Word8 @decode_extractOp(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 7, %Nat8 7)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 0, %Nat8 7)
 	%2 = trunc %Word32 %1 to %Word8
 	ret %Word8 %2
 }
 
 define %Word8 @decode_extractFunct2(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 27, %Nat8 2)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 25, %Nat8 2)
 	%2 = trunc %Word32 %1 to %Word8
 	ret %Word8 %2
 }
 
 define %Word8 @decode_extractFunct3(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 15, %Nat8 3)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 12, %Nat8 3)
 	%2 = trunc %Word32 %1 to %Word8
 	ret %Word8 %2
 }
 
 define %Word8 @decode_extractFunct5(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 33, %Nat8 6)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 27, %Nat8 5)
 	%2 = trunc %Word32 %1 to %Word8
 	ret %Word8 %2
 }
 
 define %Nat8 @decode_extractRd(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 12, %Nat8 5)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 7, %Nat8 5)
 	%2 = trunc %Word32 %1 to %Word8
 	%3 = bitcast %Word8 %2 to %Nat8
 	ret %Nat8 %3
 }
 
 define %Nat8 @decode_extractRs1(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 20, %Nat8 5)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 15, %Nat8 5)
 	%2 = trunc %Word32 %1 to %Word8
 	%3 = bitcast %Word8 %2 to %Nat8
 	ret %Nat8 %3
 }
 
 define %Nat8 @decode_extractRs2(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 25, %Nat8 5)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 20, %Nat8 5)
 	%2 = trunc %Word32 %1 to %Word8
 	%3 = bitcast %Word8 %2 to %Nat8
 	ret %Nat8 %3
 }
 
 define %Word8 @decode_extractFunct7(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 32, %Nat8 7)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 25, %Nat8 7)
 	%2 = trunc %Word32 %1 to %Word8
 	ret %Word8 %2
 }
 
 define %Word32 @decode_extractImm12(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 32, %Nat8 12)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 20, %Nat8 12)
 	ret %Word32 %1
 }
 
 define %Word32 @decode_extractImm31_12(%Word32 %instr) {
-	%1 = call %Word32 @decode_extract32(%Word32 %instr, %Nat8 32, %Nat8 20)
+	%1 = call %Word32 @bits32_extract(%Word32 %instr, %Nat8 12, %Nat8 20)
 	ret %Word32 %1
 }
 
@@ -201,7 +192,7 @@ define %Word32 @decode_extractJalImm(%Word32 %instr) {
 	%17 = and %Word32 %15, %16
 	%18 = zext i8 1 to %Word32
 	%19 = shl %Word32 %17, %18
-	%20 = zext i8 20 to %Word32
+	%20 = zext i8 19 to %Word32
 	%21 = lshr %Word32 %1, %20
 	%22 = zext i8 1 to %Word32
 	%23 = and %Word32 %21, %22

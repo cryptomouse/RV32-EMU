@@ -26,7 +26,7 @@ void put_str8(char *s) {
 }
 
 
-char *sprintf_hex32(char *buf, int d);
+char *sprintf_hex32(char *buf, uint32_t d, char alpha);
 char *sprintf_dec32(char *buf, int d);
 
 
@@ -49,6 +49,21 @@ int print(const char *str, ...) {
 			++i;
 			c = str[i];
 
+			// флаг '0' и ширина поля: %02X, %8d
+			char pad = ' ';
+			if (c == '0') {
+				pad = '0';
+				++i;
+				c = str[i];
+			}
+
+			int width = 0;
+			while ((c >= '0') && (c <= '9')) {
+				width = width * 10 + (c - '0');
+				++i;
+				c = str[i];
+			}
+
 			// буффер для печати всего кроме строк
 			char buf[10+1];
 			char *sptr = &buf[0];
@@ -57,8 +72,11 @@ int print(const char *str, ...) {
 				int d = va_arg(a_list, int);
 				sprintf_dec32(sptr, d);
 			} else if (c == 'x') {
-				int d = va_arg(a_list, int);
-				sprintf_hex32(sptr, d);
+				uint32_t d = va_arg(a_list, uint32_t);
+				sprintf_hex32(sptr, d, 'a');
+			} else if (c == 'X') {
+				uint32_t d = va_arg(a_list, uint32_t);
+				sprintf_hex32(sptr, d, 'A');
 			} else if (c == 's') {
 				char *s = va_arg(a_list, char*);
 				sptr = s;
@@ -68,6 +86,15 @@ int print(const char *str, ...) {
 				sptr[1] = 0;
 			} else if (c == '%') {
 				sptr = "%";
+			}
+
+			int len = 0;
+			while (sptr[len] != 0) {
+				++len;
+			}
+			while (len < width) {
+				putchar(pad);
+				++len;
 			}
 
 			put_str8(sptr);
@@ -88,22 +115,22 @@ int print(const char *str, ...) {
 int printf(const char *str, ...) __attribute__((alias("print")));
 
 
-char *sprintf_hex32(char *buf, int d) {
+// alpha - 'a' or 'A' (lower/upper case digits)
+char *sprintf_hex32(char *buf, uint32_t d, char alpha) {
 	char cc[8] = {0};
-	int pos = 8;
 
 	int i = 0;
-	int n;
+	uint32_t n;
 
 	do {
-		n = d % 16;
-		d = d / 16;
+		n = d & 0xF;
+		d = d >> 4;
 
 		char c;
 		if (n <= 9) {
 			c = '0' + n;
 		} else {
-			c = 'A' + (n - 10);
+			c = alpha + (n - 10);
 		}
 
 		cc[i] = c;

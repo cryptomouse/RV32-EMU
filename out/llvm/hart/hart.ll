@@ -230,8 +230,6 @@ declare %Str* @secure_getenv(%Str* %name)
 declare i8* @malloc(%SizeT %size)
 declare %Int @system([0 x %ConstChar]* %string)
 ; from included decode
-declare %Word32 @decode_bitmask32(%Nat8 %len)
-declare %Word32 @decode_extract32(%Word32 %value, %Nat8 %pos, %Nat8 %len)
 declare %Word8 @decode_extractOp(%Word32 %instr)
 declare %Word8 @decode_extractFunct2(%Word32 %instr)
 declare %Word8 @decode_extractFunct3(%Word32 %instr)
