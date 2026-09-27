@@ -89,7 +89,7 @@ public const intMemViolation: Word32 = 0x0B
 public func init (hart: *Hart, id: Nat32, bus: *BusInterface) -> Unit {
 	printf("hart #%d init\n", id)
 	setCsr(hart, csr.mhartidRegno, Word32 id)
-	setCsr(hart, csr.misaRegno, csr.misa_xlen_32 | csr.misa_i | csr.misa_m)
+	setCsr(hart, csr.misaRegno, csr.misaXlen32 | csr.misaI | csr.misaM)
 	hart.regs = []
 	hart.pc = 0
 	hart.bus = bus

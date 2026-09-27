@@ -7,12 +7,16 @@
 #include "bus.h"
 #include "hart.h"
 #include "csr.h"
-#define TEXT_FILENAME "./image.bin"
 static struct hart_hart hart;
 
-int main(void) {
+int main(int argc, char **argv) {
 	printf("RISC-V VM\n");
-	const uint32_t nbytes = bus_load_rom(TEXT_FILENAME);
+	if (argc < 2) {
+		printf("usage: %s <image.bin>\n", argv[0]);
+		exit(1);
+	}
+	char *const imageName = argv[1];
+	const uint32_t nbytes = bus_load_rom(imageName);
 	if (nbytes <= 0) {
 		exit(1);
 	}

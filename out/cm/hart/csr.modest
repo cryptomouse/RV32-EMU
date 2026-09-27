@@ -36,15 +36,15 @@ public const mstatus_mpie: Word32 = Word32 1 << 7// Previous MIE (saved on trap 
 
 
 // MISA fields
-public const misa_a: Word32 = Word32 1 << 0
-public const misa_b: Word32 = Word32 1 << 1
-public const misa_c: Word32 = Word32 1 << 2
-public const misa_f: Word32 = Word32 1 << 5
-public const misa_i: Word32 = Word32 1 << 8
-public const misa_m: Word32 = Word32 1 << 12
-public const misa_s: Word32 = Word32 1 << 18
-public const misa_u: Word32 = Word32 1 << 20
-public const misa_x: Word32 = Word32 1 << 23
-public const misa_xlen_32: Word32 = Word32 1 << 30
-public const misa_xlen_64: Word32 = Word32 2 << 30
+public const misaA: Word32 = Word32 1 << 0
+public const misaB: Word32 = Word32 1 << 1
+public const misaC: Word32 = Word32 1 << 2
+public const misaF: Word32 = Word32 1 << 5
+public const misaI: Word32 = Word32 1 << 8
+public const misaM: Word32 = Word32 1 << 12
+public const misaS: Word32 = Word32 1 << 18
+public const misaU: Word32 = Word32 1 << 20
+public const misaX: Word32 = Word32 1 << 23
+public const misaXlen32: Word32 = Word32 1 << 30
+public const misaXlen64: Word32 = Word32 2 << 30
 
