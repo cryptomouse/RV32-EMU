@@ -1,13 +1,17 @@
 
-COMPILER_PATH=/opt/homebrew/opt/llvm@14/bin
+COMPILER_PATH=/opt/homebrew/opt/llvm/bin
+#COMPILER_PATH=/usr/bin
 
 CC=$(COMPILER_PATH)/clang
+#CC=$(COMPILER_PATH)/clang-14
 MACHINE = --target=riscv32 -march=rv32im
 
 # Кароче, -nostdlib -fno-builtin -fno-builtin-memset не помогают
 # гребаный компайлер все равно норовит вызывать memset и невозможно отделаться!
 
-CFLAGS = $(MACHINE)
+# $(SYS)/include - минимальные stdio.h/stdlib.h/string.h для кода из Modest
+CFLAGS = -O0 $(MACHINE) -isystem $(SYS)/include
+LDFLAGS = -fuse-ld=lld --ld-path=/opt/homebrew/opt/lld/bin/ld.lld
 
 # only-section=.isr  не поможет - эту секцию хрен продавишь, хз почему так
 ONLYSECTION=--only-section=.text --only-section=.data
@@ -16,36 +20,49 @@ SYS=../sys
 
 LDSCRIPT = $(SYS)/mem.ld
 
+# Modest -> C (нужен MODEST_DIR)
+MODEST = $(MODEST_DIR)/modest
+MODEST_OPTS = --config=$(SYS)/rv32.toml -mbackend=c11
+GEN = gen
+
 # compile C to BIN
-all:
-	# translate C to ASM
-	#$(CC) $(CFLAGS) -S main.c
-
-	# translate ASM to OBJ
-	#$(CC) $(CFLAGS) main.s -c -o main.o
-
-	$(CC) $(CFLAGS) $(SYS)/muldivmod.c -c -o muldivmod.o
+all: modest
+	$(CC) $(CFLAGS) $(SYS)/gen/muldivmod.c -c -o muldivmod.o
 	$(CC) $(CFLAGS) $(SYS)/vect.S -c -o vect.o
 	$(CC) $(CFLAGS) $(SYS)/base.S -c -o base.o
-	$(CC) $(CFLAGS) $(SYS)/startup.c -c -o startup.o
-	$(CC) $(CFLAGS) $(SYS)/system.c -c -o system.o
-	$(CC) $(CFLAGS) $(SYS)/console.c -c -o console.o
-	$(CC) $(CFLAGS) $(SYS)/printf.c -c -o printf.o
-	$(CC) $(CFLAGS) main.c -c -o main.o
+	$(CC) $(CFLAGS) csr.S -c -o csr.o
+	$(CC) $(CFLAGS) $(SYS)/gen/startup.c -c -o startup.o
+	$(CC) $(CFLAGS) $(SYS)/gen/system.c -c -o system.o
+	$(CC) $(CFLAGS) $(SYS)/gen/console.c -c -o console.o
+	$(CC) $(CFLAGS) $(SYS)/gen/printf.c -c -o printf.o
+	$(CC) $(CFLAGS) $(GEN)/main.c -c -o main.o
 
 
 	# link OBJects to ELF
-	$(CC) $(CFLAGS) -nostdlib -o main.elf -T $(LDSCRIPT) vect.o startup.o system.o console.o printf.o base.o muldivmod.o main.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -nostdlib -o main.elf -T $(LDSCRIPT) vect.o startup.o system.o console.o printf.o base.o muldivmod.o csr.o main.o
 
 	rm *.o
 
 	# extract sections from ELF to BIN file
 
-	llvm-objcopy -Iriscv32 main.elf $(ONLYSECTION) -Obinary ../../image.bin
+	$(COMPILER_PATH)/llvm-objcopy -Iriscv32 main.elf $(ONLYSECTION) -Obinary ../../image.bin
+	#llvm-objcopy-14 -Iriscv32 main.elf $(ONLYSECTION) -Obinary ../../image.bin
 
 	# make ELF dump
-	llvm-objdump --full-contents --section=.text --section=.data -d ./main.elf > ./dump.txt
+	$(COMPILER_PATH)/llvm-objdump --full-contents --section=.text --section=.data -d ./main.elf > ./dump.txt
+	#llvm-objdump-14 --full-contents --section=.text --section=.data -d ./main.elf > ./dump.txt
 
+
+
+# translate Modest to C
+modest:
+	$(MAKE) -C $(SYS)
+	mkdir -p $(GEN)
+	$(MODEST) -o $(GEN)/main $(MODEST_OPTS) main.m
+
+
+clean:
+	rm -rf $(GEN) *.o main.elf dump.txt
 
 
 # show ELF content
@@ -66,3 +83,5 @@ symb:
 info:
 	objdump -x main.elf
 
+
+.PHONY: all modest clean dump sect symb info

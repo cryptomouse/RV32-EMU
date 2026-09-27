@@ -1,0 +1,10 @@
+#
+# rv32.toml - Modest target config for the RV32 VM
+# (applied over $MODEST_DIR/cfg/default.toml)
+#
+
+target_name = "RV32-VM"
+
+word_width = 32
+size_width = 32
+pointer_width = 32

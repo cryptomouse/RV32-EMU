@@ -86,7 +86,6 @@ public func write (adr: Nat32, value: Word32, size: Nat8) -> Unit {
 }
 
 
-
 func readFrom (ptr: Ptr, adr: Nat32, size: Nat8) -> Word32 {
 	if size == 1 {
 		return Word32 *(*Word8 ptr)
@@ -110,7 +109,6 @@ func writeTo (ptr: Ptr, adr: Nat32, value: Word32, size: Nat8) -> Unit {
 }
 
 
-
 @inline
 func isAdressInRegion (x: Nat32, region: {from: Nat32, to: Nat32}) -> Bool {
 	return x >= region.from and x < region.to
@@ -126,7 +124,6 @@ public func memoryViolation (rw: Char8, adr: Nat32) -> Unit {
 	++memviolationCnt
 //	memoryViolation_event(0x55) // !
 }
-
 
 
 public func load_rom (filename: *Str8) -> Nat32 {

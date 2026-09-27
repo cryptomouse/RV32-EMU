@@ -1,4 +1,4 @@
-// Minimal freestanding stdio.h for the RV32 VM (see ../printf.c)
+// Minimal freestanding stdio.h for the RV32 VM (see ../printf.m)
 #ifndef _VM_STDIO_H
 #define _VM_STDIO_H
 

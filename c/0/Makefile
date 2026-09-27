@@ -20,6 +20,8 @@ LDSCRIPT = $(SYS)/mem.ld
 
 # compile C to BIN
 all:
+	$(MAKE) -C $(SYS)
+
 	mcc -mbackend=c11 -o src/riscv m2/riscv.m
 	mcc -mbackend=c11 -o src/main m2/main.m
 	mcc -mbackend=c11 -o src/console m2/console.m
@@ -31,10 +33,10 @@ all:
 	# translate ASM to OBJ
 	#$(CC) $(CFLAGS) main.s -c -o main.o
 
-	$(CC) $(CFLAGS) $(SYS)/muldivmod.c -c -o muldivmod.o
+	$(CC) $(CFLAGS) $(SYS)/gen/muldivmod.c -c -o muldivmod.o
 	$(CC) $(CFLAGS) $(SYS)/vect.S -c -o vect.o
 	$(CC) $(CFLAGS) $(SYS)/base.S -c -o base.o
-	$(CC) $(CFLAGS) $(SYS)/startup.c -c -o startup.o
+	$(CC) $(CFLAGS) $(SYS)/gen/startup.c -c -o startup.o
 	$(CC) $(CFLAGS) src/console.c -c -o console.o
 	$(CC) $(CFLAGS) src/main.c -c -o main.o
 	$(CC) $(CFLAGS) src/riscv.c -c -o riscv.o

@@ -22,13 +22,15 @@ GEN = gen
 
 # compile C to BIN
 all: modest
-	$(CC) $(CFLAGS) $(SYS)/muldivmod.c -c -o muldivmod.o
+	$(MAKE) -C $(SYS)
+
+	$(CC) $(CFLAGS) $(SYS)/gen/muldivmod.c -c -o muldivmod.o
 	$(CC) $(CFLAGS) $(SYS)/vect.S -c -o vect.o
 	$(CC) $(CFLAGS) $(SYS)/base.S -c -o base.o
-	$(CC) $(CFLAGS) $(SYS)/startup.c -c -o startup.o
-	$(CC) $(CFLAGS) $(SYS)/system.c -c -o system.o
-	$(CC) $(CFLAGS) $(SYS)/console.c -c -o console.o
-	$(CC) $(CFLAGS) $(SYS)/printf.c -c -o printf.o
+	$(CC) $(CFLAGS) $(SYS)/gen/startup.c -c -o startup.o
+	$(CC) $(CFLAGS) $(SYS)/gen/system.c -c -o system.o
+	$(CC) $(CFLAGS) $(SYS)/gen/console.c -c -o console.o
+	$(CC) $(CFLAGS) $(SYS)/gen/printf.c -c -o printf.o
 	$(CC) $(CFLAGS) $(GEN)/sha256.c -c -o sha256.o
 	$(CC) $(CFLAGS) $(GEN)/bits32.c -c -o bits32.o
 	$(CC) $(CFLAGS) $(GEN)/main.c -c -o main.o

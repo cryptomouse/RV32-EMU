@@ -4,3 +4,7 @@
 *dump.txt
 *.out
 c/sha256/gen/
+c/sys/gen/
+c/hello_world/gen/
+c/mul_table/gen/
+c/misa/gen/
