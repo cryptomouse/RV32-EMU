@@ -61,9 +61,9 @@ public func write (adr: Nat32, value: Word32, size: Nat8) -> Unit {
 	} else if isAdressInRegion(adr, mmioRegion) {
 		let mmioAdr: Nat32 = adr - mmioStart
 		if size == 1 {
-			mmio.write8(mmioAdr, unsafe(Word8 value))
+			mmio.write8(mmioAdr, Word8 value)
 		} else if size == 2 {
-			mmio.write16(mmioAdr, unsafe(Word16 value))
+			mmio.write16(mmioAdr, Word16 value)
 		} else if size == 4 {
 			mmio.write32(mmioAdr, value)
 		}
@@ -90,9 +90,9 @@ func readFrom (ptr: Ptr, adr: Nat32, size: Nat8) -> Word32 {
 
 func writeTo (ptr: Ptr, adr: Nat32, value: Word32, size: Nat8) -> Unit {
 	if size == 1 {
-		*(*Word8 ptr) = unsafe(Word8 value)
+		*(*Word8 ptr) = Word8 value
 	} else if size == 2 {
-		*(*Word16 ptr) = unsafe(Word16 value)
+		*(*Word16 ptr) = Word16 value
 	} else if size == 4 {
 		*(*Word32 ptr) = value
 	}

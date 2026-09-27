@@ -1,3 +1,5 @@
+// RV32-EMU
+
 include "libc/stdlib"
 include "libc/stdio"
 
