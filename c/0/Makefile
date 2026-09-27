@@ -49,9 +49,8 @@ all:
 	# extract sections from ELF to BIN file
 
 	llvm-objcopy -Iriscv32 out/main.elf $(ONLYSECTION) -Obinary out/image.bin
-	cp out/image.bin ../../image.bin
 
-	#llvm-objcopy-14 -Iriscv32 out/main.elf $(ONLYSECTION) -Obinary ../../image.bin
+	#llvm-objcopy-14 -Iriscv32 out/main.elf $(ONLYSECTION) -Obinary out/image.bin
 
 	# make ELF dump
 	llvm-objdump --full-contents --section=.text --section=.data -d out/main.elf > out/dump.txt

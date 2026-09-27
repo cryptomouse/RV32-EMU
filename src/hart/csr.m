@@ -1,5 +1,5 @@
 /*
- * hart/csr
+ * hart/csr.modest
  */
 
 pragma public_module

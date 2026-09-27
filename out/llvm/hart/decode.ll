@@ -59,6 +59,7 @@ declare void @llvm.stackrestore(i8*)
 ; from import "bits32"
 declare %Word32 @bits32_bitmask(%Nat8 %len)
 declare %Word32 @bits32_extract(%Word32 %value, %Nat8 %pos, %Nat8 %len)
+declare %Word32 @bits32_insert(%Word32 %value, %Word32 %bitfield, %Nat8 %pos, %Nat8 %len)
 declare %Word32 @bits32_set(%Word32 %x, %Nat8 %no)
 declare %Word32 @bits32_reset(%Word32 %x, %Nat8 %no)
 declare %Word32 @bits32_switch(%Word32 %x, %Nat8 %no, %Bool %val)

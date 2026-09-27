@@ -43,7 +43,7 @@ all: modest
 
 	# extract sections from ELF to BIN file
 
-	$(COMPILER_PATH)/llvm-objcopy -Iriscv32 main.elf $(ONLYSECTION) -Obinary ../../image.bin
+	$(COMPILER_PATH)/llvm-objcopy -Iriscv32 main.elf $(ONLYSECTION) -Obinary image.bin
 
 	# make ELF dump
 	$(COMPILER_PATH)/llvm-objdump --full-contents --section=.text --section=.data -d ./main.elf > ./dump.txt
@@ -57,7 +57,7 @@ modest:
 
 
 clean:
-	rm -rf $(GEN) *.o main.elf dump.txt
+	rm -rf $(GEN) *.o main.elf image.bin dump.txt
 
 
 # show ELF content

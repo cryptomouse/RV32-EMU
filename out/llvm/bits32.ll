@@ -76,6 +76,20 @@ define %Word32 @bits32_extract(%Word32 %value, %Nat8 %pos, %Nat8 %len) alwaysinl
 	ret %Word32 %4
 }
 
+define %Word32 @bits32_insert(%Word32 %value, %Word32 %bitfield, %Nat8 %pos, %Nat8 %len) alwaysinline {
+	%1 = call %Word32 @bits32_bitmask(%Nat8 %len)
+	%2 = zext %Nat8 %pos to %Word32
+	%3 = shl %Word32 %1, %2
+	%4 = xor %Word32 %3, -1
+	%5 = and %Word32 %value, %4
+	%6 = call %Word32 @bits32_bitmask(%Nat8 %len)
+	%7 = and %Word32 %bitfield, %6
+	%8 = zext %Nat8 %pos to %Word32
+	%9 = shl %Word32 %7, %8
+	%10 = or %Word32 %5, %9
+	ret %Word32 %10
+}
+
 define %Word32 @bits32_set(%Word32 %x, %Nat8 %no) alwaysinline {
 	%1 = zext i8 1 to %Word32
 	%2 = zext %Nat8 %no to %Word32
