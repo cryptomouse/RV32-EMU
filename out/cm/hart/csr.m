@@ -5,30 +5,30 @@ import "builtin"
 // see: https://five-embeddev.com/riscv-isa-manual/latest/priv-csrs.html
 //
 
-public const mstatus_regno: Nat16 = 0x300// Machine status register
-public const misa_regno: Nat16 = 0x301// ISA and extensions
-public const medeleg_regno: Nat16 = 0x302// Machine exception delegation register
-public const mideleg_regno: Nat16 = 0x303// Machine interrupt delegation register
-public const mie_regno: Nat16 = 0x304// Machine interrupt-enable register
-public const mtvec_regno: Nat16 = 0x305// Machine trap-handler base address
-public const mcounteren_regno: Nat16 = 0x306// Machine counter enable
+public const mstatusRegno: Nat16 = 0x300// Machine status register
+public const misaRegno: Nat16 = 0x301// ISA and extensions
+public const medelegRegno: Nat16 = 0x302// Machine exception delegation register
+public const midelegRegno: Nat16 = 0x303// Machine interrupt delegation register
+public const mieRegno: Nat16 = 0x304// Machine interrupt-enable register
+public const mtvecRegno: Nat16 = 0x305// Machine trap-handler base address
+public const mcounterenRegno: Nat16 = 0x306// Machine counter enable
 
-public const mscratch_regno: Nat16 = 0x340
-public const mepc_regno: Nat16 = 0x341
-public const mcause_regno: Nat16 = 0x342
-public const mtval_regno: Nat16 = 0x343
-public const mip_regno: Nat16 = 0x344
+public const mscratchRegno: Nat16 = 0x340
+public const mepcRegno: Nat16 = 0x341
+public const mcauseRegno: Nat16 = 0x342
+public const mtvalRegno: Nat16 = 0x343
+public const mipRegno: Nat16 = 0x344
 
-public const mcycle_regno: Nat16 = 0xB00
-public const minstret_regno: Nat16 = 0xB02
-public const mcycleh_regno: Nat16 = 0xB80
-public const minstreth_regno: Nat16 = 0xB82
+public const mcycleRegno: Nat16 = 0xB00
+public const minstretRegno: Nat16 = 0xB02
+public const mcyclehRegno: Nat16 = 0xB80
+public const minstrethRegno: Nat16 = 0xB82
 
-public const mvendorid_regno: Nat16 = 0xF11
-public const marchid_regno: Nat16 = 0xF12
-public const mimpid_regno: Nat16 = 0xF13
-public const mhartid_regno: Nat16 = 0xF14
-public const mconfigptr_regno: Nat16 = 0xF15
+public const mvendoridRegno: Nat16 = 0xF11
+public const marchidRegno: Nat16 = 0xF12
+public const mimpidRegno: Nat16 = 0xF13
+public const mhartidRegno: Nat16 = 0xF14
+public const mconfigptrRegno: Nat16 = 0xF15
 
 
 

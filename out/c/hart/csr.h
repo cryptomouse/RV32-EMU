@@ -42,7 +42,7 @@
 #define CSR_MISA_S ((uint32_t)1 << 18)
 #define CSR_MISA_U ((uint32_t)1 << 20)
 #define CSR_MISA_X ((uint32_t)1 << 23)
-#define CSR_MISA_XLEN_32 ((uint32_t)1 << 30)
-#define CSR_MISA_XLEN_64 ((uint32_t)2 << 30)
+#define CSR_MISA_XLEN32 ((uint32_t)1 << 30)
+#define CSR_MISA_XLEN64 ((uint32_t)2 << 30)
 #endif
 

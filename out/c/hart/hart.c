@@ -59,7 +59,7 @@ static uint32_t trap(struct hart_hart *hart, uint32_t cause, uint32_t epc) {
 void hart_init(struct hart_hart *hart, uint32_t id, hart_BusInterface *bus) {
 	printf("hart #%d init\n", id);
 	hart_setCsr(hart, CSR_MHARTID_REGNO, id);
-	hart_setCsr(hart, CSR_MISA_REGNO, CSR_MISA_XLEN_32 | CSR_MISA_I | CSR_MISA_M);
+	hart_setCsr(hart, CSR_MISA_REGNO, CSR_MISA_XLEN32 | CSR_MISA_I | CSR_MISA_M);
 	__builtin_bzero(&hart->regs, sizeof(uint32_t [32]));
 	hart->pc = 0;
 	hart->bus = bus;

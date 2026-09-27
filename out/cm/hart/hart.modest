@@ -24,25 +24,25 @@ public type Hart = {
 
 public func interrupt (hart: *Hart, int_num: Word32) -> Unit {
 	let mask: Word32 = Word32 1 << unsafe(Nat8 int_num)
-	setCsr(hart, csr.mip_regno, getCsr(hart, csr.mip_regno) | mask)
+	setCsr(hart, csr.mipRegno, getCsr(hart, csr.mipRegno) | mask)
 }
 
 
 // Enter trap: save epc & cause, push MIE to MPIE and disable interrupts.
 // Returns trap handler address (mtvec, direct mode)
 func trap (hart: *Hart, cause: Word32, epc: Nat32) -> Nat32 {
-	let mstatus: Word32 = getCsr(hart, csr.mstatus_regno)
+	let mstatus: Word32 = getCsr(hart, csr.mstatusRegno)
 	var new_mstatus: Word32 = mstatus & not (csr.mstatus_mie | csr.mstatus_mpie)
 	if (mstatus & csr.mstatus_mie) != 0 {
 		new_mstatus = new_mstatus | csr.mstatus_mpie
 	}
-	setCsr(hart, csr.mstatus_regno, new_mstatus)
+	setCsr(hart, csr.mstatusRegno, new_mstatus)
 
-	setCsr(hart, csr.mepc_regno, Word32 epc)
-	setCsr(hart, csr.mcause_regno, cause)
-	setCsr(hart, csr.mtval_regno, 0)
+	setCsr(hart, csr.mepcRegno, Word32 epc)
+	setCsr(hart, csr.mcauseRegno, cause)
+	setCsr(hart, csr.mtvalRegno, 0)
 
-	return Nat32 (getCsr(hart, csr.mtvec_regno) & not Word32 3)
+	return Nat32 (getCsr(hart, csr.mtvecRegno) & not Word32 3)
 }
 
 
@@ -88,8 +88,8 @@ public const intMemViolation: Word32 = 0x0B
 
 public func init (hart: *Hart, id: Nat32, bus: *BusInterface) -> Unit {
 	printf("hart #%d init\n", id)
-	setCsr(hart, csr.mhartid_regno, Word32 id)
-	setCsr(hart, csr.misa_regno, csr.misa_xlen_32 | csr.misa_i | csr.misa_m)
+	setCsr(hart, csr.mhartidRegno, Word32 id)
+	setCsr(hart, csr.misaRegno, csr.misa_xlen_32 | csr.misa_i | csr.misa_m)
 	hart.regs = []
 	hart.pc = 0
 	hart.bus = bus
@@ -105,15 +105,15 @@ func fetch (hart: *Hart) -> Word32 {
 
 
 public func cycle (hart: *Hart) -> Bool {
-	let pending: Word32 = getCsr(hart, csr.mip_regno) & getCsr(hart, csr.mie_regno)
-	let mie_enabled: Bool = (getCsr(hart, csr.mstatus_regno) & csr.mstatus_mie) != 0
+	let pending: Word32 = getCsr(hart, csr.mipRegno) & getCsr(hart, csr.mieRegno)
+	let mie_enabled: Bool = (getCsr(hart, csr.mstatusRegno) & csr.mstatus_mie) != 0
 	if mie_enabled and pending != 0 {
 		var int_num: Nat8 = 0
 		while (pending & (Word32 1 << int_num)) == 0 {
 			++int_num
 		}
 		let mask: Word32 = Word32 1 << int_num
-		setCsr(hart, csr.mip_regno, getCsr(hart, csr.mip_regno) & not mask)
+		setCsr(hart, csr.mipRegno, getCsr(hart, csr.mipRegno) & not mask)
 		let cause: Word32 = 0x80000000 | Word32 int_num
 		trace(hart.pc, "\nmcause #%08X\n", cause)
 		hart.pc = trap(hart, cause, epc=hart.pc)
@@ -121,7 +121,7 @@ public func cycle (hart: *Hart) -> Bool {
 
 	let instr: Word32 = fetch(hart)
 	exec(hart, instr)
-	let mc: *Nat32 = unsafe(*Nat32 &hart.csrs[csr.mcycle_regno])
+	let mc: *Nat32 = unsafe(*Nat32 &hart.csrs[csr.mcycleRegno])
 	++*mc
 
 	return not hart.end
@@ -522,27 +522,27 @@ func execSystem (hart: *Hart, instr: Word32, nexpc: Nat32) -> Nat32 {
 
 	if instr == instrECALL {
 		trace(hart.pc, "ecall\n")
-		printf("ECALL: hart #%d\n", getCsr(hart, csr.mhartid_regno))
+		printf("ECALL: hart #%d\n", getCsr(hart, csr.mhartidRegno))
 		return trap(hart, intSysCall, epc=nexpc)
 	} else if instr == instrMRET {
 		trace(hart.pc, "mret\n")
-		let mstatus: Word32 = getCsr(hart, csr.mstatus_regno)
+		let mstatus: Word32 = getCsr(hart, csr.mstatusRegno)
 		var new_mstatus: Word32 = (mstatus & not csr.mstatus_mie) | csr.mstatus_mpie
 		if (mstatus & csr.mstatus_mpie) != 0 {
 			new_mstatus = new_mstatus | csr.mstatus_mie
 		}
-		setCsr(hart, csr.mstatus_regno, new_mstatus)
+		setCsr(hart, csr.mstatusRegno, new_mstatus)
 
-		let mepc: Word32 = getCsr(hart, csr.mepc_regno)
-		let mcause: Word32 = getCsr(hart, csr.mcause_regno)
-		let mtval: Word32 = getCsr(hart, csr.mtval_regno)
+		let mepc: Word32 = getCsr(hart, csr.mepcRegno)
+		let mcause: Word32 = getCsr(hart, csr.mcauseRegno)
+		let mtval: Word32 = getCsr(hart, csr.mtvalRegno)
 		printf("MRET: hart #%d, mepc=%08X, mcause=%08X, mtval=%08X\n"
-			getCsr(hart, csr.mhartid_regno)
+			getCsr(hart, csr.mhartidRegno)
 			mepc, mcause, mtval
 		); return Nat32 mepc
 	} else if instr == instrEBREAK {
 		trace(hart.pc, "ebreak\n")
-		printf("EBREAK: hart #%d\n", getCsr(hart, csr.mhartid_regno))
+		printf("EBREAK: hart #%d\n", getCsr(hart, csr.mhartidRegno))
 		hart.end = true
 	} else if funct3 == funct3_CSRRW {
 		csr_rw(hart, xcsr, rd, rs1)

@@ -31,9 +31,9 @@ public type Hart = {
 
 
 public func interrupt (hart: *Hart, int_num: Word32) -> Unit {
-	setCsr(hart, csr.mcause_regno, 0x80000000 | int_num)
-	setCsr(hart, csr.mip_regno, 1)
-	setCsr(hart, csr.mtval_regno, 0)
+	setCsr(hart, csr.mcauseRegno, 0x80000000 | int_num)
+	setCsr(hart, csr.mipRegno, 1)
+	setCsr(hart, csr.mtvalRegno, 0)
 }
 
 
@@ -79,8 +79,8 @@ public const intMemViolation: Word32 = 0x0B
 
 public func init (hart: *Hart, id: Nat32, bus: *BusInterface) -> Unit {
 	printf("hart #%d init\n", id)
-	setCsr(hart, csr.mhartid_regno, Word32 id)
-	setCsr(hart, csr.misa_regno, csr.misa_xlen_32 | csr.misa_i | csr.misa_m)
+	setCsr(hart, csr.mhartidRegno, Word32 id)
+	setCsr(hart, csr.misaRegno, csr.misa_xlen_32 | csr.misa_i | csr.misa_m)
 	hart.regs = []
 	hart.pc = 0
 	hart.bus = bus
@@ -96,19 +96,19 @@ func fetch (hart: *Hart) -> Word32 {
 
 
 public func cycle (hart: *Hart) -> Bool {
-	if getCsr(hart, csr.mip_regno) != 0 {
-		trace(hart.pc, "\nmcause #%02X\n", getCsr(hart, csr.mcause_regno))
-		let adr = Nat32 getCsr(hart, csr.mtvec_regno)
-		setCsr(hart, csr.mepc_regno, Word32 hart.pc)
-		setCsr(hart, csr.mcause_regno, 0)
-		setCsr(hart, csr.mtval_regno, 0)
-		setCsr(hart, csr.mip_regno, 0)
+	if getCsr(hart, csr.mipRegno) != 0 {
+		trace(hart.pc, "\nmcause #%02X\n", getCsr(hart, csr.mcauseRegno))
+		let adr = Nat32 getCsr(hart, csr.mtvecRegno)
+		setCsr(hart, csr.mepcRegno, Word32 hart.pc)
+		setCsr(hart, csr.mcauseRegno, 0)
+		setCsr(hart, csr.mtvalRegno, 0)
+		setCsr(hart, csr.mipRegno, 0)
 		hart.pc = adr
 	}
 
 	let instr: Word32 = fetch(hart)
 	exec(hart, instr)
-	let mc: *Nat32 = unsafe *Nat32 &hart.csrs[csr.mcycle_regno]
+	let mc: *Nat32 = unsafe *Nat32 &hart.csrs[csr.mcycleRegno]
 	++*mc
 
 	return not hart.end
@@ -509,20 +509,20 @@ func execSystem (hart: *Hart, instr: Word32, nexpc: Nat32) -> Nat32 {
 
 	if instr == instrECALL {
 		trace(hart.pc, "ecall\n")
-		printf("ECALL: hart #%d\n", getCsr(hart, csr.mhartid_regno))
-		setCsr(hart, csr.mip_regno, 1)
+		printf("ECALL: hart #%d\n", getCsr(hart, csr.mhartidRegno))
+		setCsr(hart, csr.mipRegno, 1)
 	} else if instr == instrMRET {
 		trace(hart.pc, "mret\n")
-		let mepc: Word32 = getCsr(hart, csr.mepc_regno)
-		let mcause: Word32 = getCsr(hart, csr.mcause_regno)
-		let mtval: Word32 = getCsr(hart, csr.mtval_regno)
+		let mepc: Word32 = getCsr(hart, csr.mepcRegno)
+		let mcause: Word32 = getCsr(hart, csr.mcauseRegno)
+		let mtval: Word32 = getCsr(hart, csr.mtvalRegno)
 		printf("MRET: hart #%d, mepc=%08X, mcause=%08X, mtval=%08X\n"
-			getCsr(hart, csr.mhartid_regno)
+			getCsr(hart, csr.mhartidRegno)
 			mepc, mcause, mtval
 		); return Nat32 mepc
 	} else if instr == instrEBREAK {
 		trace(hart.pc, "ebreak\n")
-		printf("EBREAK: hart #%d\n", getCsr(hart, csr.mhartid_regno))
+		printf("EBREAK: hart #%d\n", getCsr(hart, csr.mhartidRegno))
 		hart.end = true
 	} else if funct3 == funct3_CSRRW {
 		csr_rw(hart, xcsr, rd, rs1)
