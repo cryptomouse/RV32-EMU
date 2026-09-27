@@ -93,7 +93,7 @@ define %Word32 @bits32_reset(%Word32 %x, %Nat8 %no) alwaysinline {
 	ret %Word32 %5
 }
 
-define %Word32 @bits32_switch(%Word32 %x, %Nat8 %no, %Bool %val) {
+define %Word32 @bits32_switch(%Word32 %x, %Nat8 %no, %Bool %val) alwaysinline {
 ; if_0
 	br %Bool %val , label %then_0, label %else_0
 then_0:

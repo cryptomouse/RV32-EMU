@@ -26,7 +26,16 @@ inline uint32_t bits32_reset(uint32_t x, uint8_t no) {
 	const uint32_t mask = (uint32_t)1 << no;
 	return x & ~mask;
 }
-uint32_t bits32_switch(uint32_t x, uint8_t no, bool val);
+
+__attribute__((always_inline))
+inline uint32_t bits32_switch(uint32_t x, uint8_t no, bool val) {
+	if (val) {
+		return bits32_set(x, no);
+	} else {
+		return bits32_reset(x, no);
+	}
+	return 0x0;
+}
 
 __attribute__((always_inline))
 inline bool bits32_check(uint32_t x, uint8_t no) {

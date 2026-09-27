@@ -27,9 +27,9 @@ const mmioStart = Nat32 0xF00C0000
 const mmioEnd = mmioStart + mmioSize
 
 
-const ramRegion  = {from=ramStart, to=ramEnd}
-const romRegion  = {from=romStart, to=romEnd}
-const mmioRegion = {from=mmioStart, to=mmioEnd}
+const ramRegion  = {begin=ramStart, end=ramEnd}
+const romRegion  = {begin=romStart, end=romEnd}
+const mmioRegion = {begin=mmioStart, end=mmioEnd}
 
 
 var ram: [ramSize]Word8
@@ -38,21 +38,23 @@ var rom: [romSize]Word8
 
 public func read (adr: Nat32, size: Nat8) -> Word32 {
 	if isAdressInRegion(adr, ramRegion) {
-		let ramPtr = Ptr &ram[adr - ramStart]
-		return readFrom(ramPtr, adr, size)
+		let offset = adr - ramRegion.begin
+		let ptr: Ptr = &ram[offset]
+		return readFrom(ptr, adr, size)
 
 	} else if isAdressInRegion(adr, romRegion) {
-		let romPtr = Ptr &rom[adr - romStart]
-		return readFrom(romPtr, adr, size)
+		let offset = adr - romRegion.begin
+		let ptr: Ptr = &rom[offset]
+		return readFrom(ptr, adr, size)
 
 	} else if isAdressInRegion(adr, mmioRegion) {
-		let mmioAdr = adr - mmioStart
+		let offset = adr - mmioRegion.begin
 		if size == 1 {
-			return Word32 mmio.read8(mmioAdr)
+			return Word32 mmio.read8(offset)
 		} else if size == 2 {
-			return Word32 mmio.read16(mmioAdr)
+			return Word32 mmio.read16(offset)
 		} else if size == 4 {
-			return mmio.read32(mmioAdr)
+			return mmio.read32(offset)
 		}
 
 	} else {
@@ -65,17 +67,18 @@ public func read (adr: Nat32, size: Nat8) -> Word32 {
 
 public func write (adr: Nat32, value: Word32, size: Nat8) -> Unit {
 	if isAdressInRegion(adr, ramRegion) {
-		let ramPtr = Ptr &ram[adr - ramStart]
-		writeTo(ramPtr, adr, value, size)
+		let offset = adr - ramRegion.begin
+		let ptr: Ptr = &ram[offset]
+		writeTo(ptr, adr, value, size)
 
 	} else if isAdressInRegion(adr, mmioRegion) {
-		let mmioAdr = adr - mmioStart
+		let offset = adr - mmioRegion.begin
 		if size == 1 {
-			mmio.write8(mmioAdr, Word8 value)
+			mmio.write8(offset, Word8 value)
 		} else if size == 2 {
-			mmio.write16(mmioAdr, Word16 value)
+			mmio.write16(offset, Word16 value)
 		} else if size == 4 {
-			mmio.write32(mmioAdr, value)
+			mmio.write32(offset, value)
 		}
 
 	} else if isAdressInRegion(adr, romRegion) {
@@ -110,8 +113,8 @@ func writeTo (ptr: Ptr, adr: Nat32, value: Word32, size: Nat8) -> Unit {
 
 
 @inline
-func isAdressInRegion (x: Nat32, region: {from: Nat32, to: Nat32}) -> Bool {
-	return x >= region.from and x < region.to
+func isAdressInRegion (x: Nat32, region: {begin: Nat32, end: Nat32}) -> Bool {
+	return x >= region.begin and x < region.end
 }
 
 
