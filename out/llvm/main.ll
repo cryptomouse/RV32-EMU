@@ -299,7 +299,7 @@ declare void @hart_show_regs(%hart_Hart* %hart)
 ; -- end print imports 'main' --
 ; -- strings --
 @.str1 = private constant [11 x i8] [i8 82, i8 73, i8 83, i8 67, i8 45, i8 86, i8 32, i8 86, i8 77, i8 10, i8 0]
-@.str2 = private constant [12 x i8] [i8 46, i8 47, i8 105, i8 109, i8 97, i8 103, i8 101, i8 46, i8 98, i8 105, i8 110, i8 0]
+@.str2 = private constant [23 x i8] [i8 117, i8 115, i8 97, i8 103, i8 101, i8 58, i8 32, i8 37, i8 115, i8 32, i8 60, i8 105, i8 109, i8 97, i8 103, i8 101, i8 46, i8 98, i8 105, i8 110, i8 62, i8 10, i8 0]
 @.str3 = private constant [82 x i8] [i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 10, i8 0]
 @.str4 = private constant [82 x i8] [i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 10, i8 0]
 @.str5 = private constant [13 x i8] [i8 109, i8 99, i8 121, i8 99, i8 108, i8 101, i8 32, i8 61, i8 32, i8 37, i8 117, i8 10, i8 0]
@@ -307,58 +307,70 @@ declare void @hart_show_regs(%hart_Hart* %hart)
 @.str7 = private constant [2 x i8] [i8 10, i8 0]
 ; -- endstrings --
 @hart = internal global %hart_Hart zeroinitializer
-define %Int @main() {
+define %Int @main(%Int %argc, [0 x %Str8*]* %argv) {
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([11 x i8]* @.str1 to [0 x i8]*))
-	%2 = call %Nat32 @bus_load_rom(%Str8* bitcast ([12 x i8]* @.str2 to [0 x i8]*))
 ; if_0
-	%3 = icmp ule %Nat32 %2, 0
-	br %Bool %3 , label %then_0, label %endif_0
+	%2 = icmp slt %Int %argc, 2
+	br %Bool %2 , label %then_0, label %endif_0
 then_0:
+	%3 = getelementptr [0 x %Str8*], [0 x %Str8*]* %argv, %Int32 0, %Int32 0
+	%4 = load %Str8*, %Str8** %3
+	%5 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([23 x i8]* @.str2 to [0 x i8]*), %Str8* %4)
 	call void @exit(%Int 1)
 	br label %endif_0
 endif_0:
-	%4 = alloca %hart_BusInterface, align 8
-	%5 = insertvalue %hart_BusInterface zeroinitializer, %Word32 (%Nat32, %Nat8)* @bus_read, 0
-	%6 = insertvalue %hart_BusInterface %5, void (%Nat32, %Word32, %Nat8)* @bus_write, 1
-	store %hart_BusInterface %6, %hart_BusInterface* %4
-	call void @hart_init(%hart_Hart* @hart, %Nat32 0, %hart_BusInterface* %4)
-	%7 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str3 to [0 x i8]*))
-	%8 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %8
+	%6 = getelementptr [0 x %Str8*], [0 x %Str8*]* %argv, %Int32 0, %Int32 1
+	%7 = load %Str8*, %Str8** %6
+	%8 = call %Nat32 @bus_load_rom(%Str8* %7)
+; if_1
+	%9 = icmp ule %Nat32 %8, 0
+	br %Bool %9 , label %then_1, label %endif_1
+then_1:
+	call void @exit(%Int 1)
+	br label %endif_1
+endif_1:
+	%10 = alloca %hart_BusInterface, align 8
+	%11 = insertvalue %hart_BusInterface zeroinitializer, %Word32 (%Nat32, %Nat8)* @bus_read, 0
+	%12 = insertvalue %hart_BusInterface %11, void (%Nat32, %Word32, %Nat8)* @bus_write, 1
+	store %hart_BusInterface %12, %hart_BusInterface* %10
+	call void @hart_init(%hart_Hart* @hart, %Nat32 0, %hart_BusInterface* %10)
+	%13 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str3 to [0 x i8]*))
+	%14 = alloca %Nat32, align 4
+	store %Nat32 0, %Nat32* %14
 ; while_1
 	br label %again_1
 again_1:
 	br %Bool 1 , label %body_1, label %break_1
 body_1:
-; if_1
-	%9 = call %Bool @hart_cycle(%hart_Hart* @hart)
-	%10 = xor %Bool %9, 1
-	br %Bool %10 , label %then_1, label %endif_1
-then_1:
-	br label %break_1
-	br label %endif_1
-endif_1:
-	%12 = load %Nat32, %Nat32* %8
-	%13 = add %Nat32 %12, 1
-	store %Nat32 %13, %Nat32* %8
 ; if_2
-	%14 = load %Nat32, %Nat32* %8
-	%15 = icmp eq %Nat32 %14, 1000
-	br %Bool %15 , label %then_2, label %endif_2
+	%15 = call %Bool @hart_cycle(%hart_Hart* @hart)
+	%16 = xor %Bool %15, 1
+	br %Bool %16 , label %then_2, label %endif_2
 then_2:
-	store %Nat32 0, %Nat32* %8
-	%16 = zext i8 1 to %Word32
-	call void @hart_interrupt(%hart_Hart* @hart, %Word32 %16)
+	br label %break_1
 	br label %endif_2
 endif_2:
+	%18 = load %Nat32, %Nat32* %14
+	%19 = add %Nat32 %18, 1
+	store %Nat32 %19, %Nat32* %14
+; if_3
+	%20 = load %Nat32, %Nat32* %14
+	%21 = icmp eq %Nat32 %20, 1000
+	br %Bool %21 , label %then_3, label %endif_3
+then_3:
+	store %Nat32 0, %Nat32* %14
+	%22 = zext i8 1 to %Word32
+	call void @hart_interrupt(%hart_Hart* @hart, %Word32 %22)
+	br label %endif_3
+endif_3:
 	br label %again_1
 break_1:
-	%17 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str4 to [0 x i8]*))
-	%18 = call %Word32 @hart_getCsr(%hart_Hart* @hart, %Nat16 2816)
-	%19 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str5 to [0 x i8]*), %Word32 %18)
-	%20 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str6 to [0 x i8]*))
+	%23 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str4 to [0 x i8]*))
+	%24 = call %Word32 @hart_getCsr(%hart_Hart* @hart, %Nat16 2816)
+	%25 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str5 to [0 x i8]*), %Word32 %24)
+	%26 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str6 to [0 x i8]*))
 	call void @hart_show_regs(%hart_Hart* @hart)
-	%21 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str7 to [0 x i8]*))
+	%27 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str7 to [0 x i8]*))
 	call void @bus_show_ram()
 	ret %Int 0
 }

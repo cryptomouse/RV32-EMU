@@ -6,16 +6,19 @@ import "hart/hart" as rvHart
 import "hart/csr" as csr
 
 
-const text_filename = "./image.bin"
-
-
 var hart: rvHart.Hart
 
 
-func main () -> Int {
+func main (argc: Int, argv: *[]*Str8) -> Int {
 	printf("RISC-V VM\n")
 
-	let nbytes = bus.load_rom(text_filename)
+	if argc < 2 {
+		printf("usage: %s <image.bin>\n", argv[0])
+		exit(1)
+	}
+
+	let imageName = argv[1]
+	let nbytes = bus.load_rom(imageName)
 	if nbytes <= 0 {
 		exit(1)
 	}
