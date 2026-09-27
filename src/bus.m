@@ -97,6 +97,7 @@ func readFrom (ptr: Ptr, adr: Nat32, size: Nat8) -> Word32 {
 	} else if size == 4 {
 		return *(*Word32 ptr)
 	}
+
 	return 0
 }
 
