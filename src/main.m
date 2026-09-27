@@ -1,4 +1,5 @@
 // RV32-EMU
+// run: ./a.out c/sha256/image.bin
 
 include "libc/stdlib"
 include "libc/stdio"
