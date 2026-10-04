@@ -16,6 +16,11 @@ inline uint32_t bits32_extract(uint32_t value, uint8_t pos, uint8_t len) {
 }
 
 __attribute__((always_inline))
+inline uint32_t bits32_insert(uint32_t value, uint32_t bitfield, uint8_t pos, uint8_t len) {
+	return (value & ~(bits32_bitmask(len) << pos)) | ((bitfield & bits32_bitmask(len)) << pos);
+}
+
+__attribute__((always_inline))
 inline uint32_t bits32_set(uint32_t x, uint8_t no) {
 	const uint32_t mask = (uint32_t)1 << no;
 	return x | mask;

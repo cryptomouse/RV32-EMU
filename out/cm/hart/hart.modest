@@ -539,7 +539,8 @@ func execSystem (hart: *Hart, instr: Word32, nexpc: Nat32) -> Nat32 {
 		printf("MRET: hart #%d, mepc=%08X, mcause=%08X, mtval=%08X\n"
 			getCsr(hart, csr.mhartidRegno)
 			mepc, mcause, mtval
-		); return Nat32 mepc
+		)
+		return Nat32 mepc
 	} else if instr == instrEBREAK {
 		trace(hart.pc, "ebreak\n")
 		printf("EBREAK: hart #%d\n", getCsr(hart, csr.mhartidRegno))
