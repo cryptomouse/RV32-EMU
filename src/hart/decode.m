@@ -1,62 +1,60 @@
 // hart/decode.modest
 //
 
-pragma public_module
-
 import "lightfood/bits32"
 
 
-func extractOp (instr: Word32) -> Word8 {
+public func extractOp (instr: Word32) -> Word8 {
 	return Word8 bits32.extract(value=instr, pos=0, len=7)
 }
 
 
-func extractFunct2 (instr: Word32) -> Word8 {
+public func extractFunct2 (instr: Word32) -> Word8 {
 	return Word8 bits32.extract(value=instr, pos=25, len=2)
 }
 
 
-func extractFunct3 (instr: Word32) -> Word8 {
+public func extractFunct3 (instr: Word32) -> Word8 {
 	return Word8 bits32.extract(value=instr, pos=12, len=3)
 }
 
 
-func extractFunct5 (instr: Word32) -> Word8 {
+public func extractFunct5 (instr: Word32) -> Word8 {
 	return Word8 bits32.extract(value=instr, pos=27, len=5)
 }
 
 
-func extractRd (instr: Word32) -> Nat8 {
+public func extractRd (instr: Word32) -> Nat8 {
 	return Nat8 Word8 bits32.extract(value=instr, pos=7, len=5)
 }
 
 
-func extractRs1 (instr: Word32) -> Nat8 {
+public func extractRs1 (instr: Word32) -> Nat8 {
 	return Nat8 Word8 bits32.extract(value=instr, pos=15, len=5)
 }
 
 
-func extractRs2 (instr: Word32) -> Nat8 {
+public func extractRs2 (instr: Word32) -> Nat8 {
 	return Nat8 Word8 bits32.extract(value=instr, pos=20, len=5)
 }
 
 
-func extractFunct7 (instr: Word32) -> Word8 {
+public func extractFunct7 (instr: Word32) -> Word8 {
 	return Word8 bits32.extract(value=instr, pos=25, len=7)
 }
 
 
-func extractImm12 (instr: Word32) -> Word32 {
+public func extractImm12 (instr: Word32) -> Word32 {
 	return bits32.extract(value=instr, pos=20, len=12)
 }
 
 
-func extractImm31_12 (instr: Word32) -> Word32 {
+public func extractImm31_12 (instr: Word32) -> Word32 {
 	return bits32.extract(value=instr, pos=12, len=20)
 }
 
 
-func extractBImm (instr: Word32) -> Int16 {
+public func extractBImm (instr: Word32) -> Int16 {
 	let imm4to1_11 = Word16 extractRd(instr)
 	let imm12_10to5 = extractFunct7(instr)
 	let bit4to1 = imm4to1_11 & 0x1E
@@ -75,7 +73,7 @@ func extractBImm (instr: Word32) -> Int16 {
 }
 
 
-func extractJalImm (instr: Word32) -> Word32 {
+public func extractJalImm (instr: Word32) -> Word32 {
 	let imm = extractImm31_12(instr)
 	let bit19to12_msk = ((imm >> 0) & 0xFF) << 12
 	let bit11_msk = ((imm >> 8) & 0x1) << 11
@@ -86,7 +84,7 @@ func extractJalImm (instr: Word32) -> Word32 {
 
 
 // sign expand (12bit -> 32bit)
-func expand12 (val_12bit: Word32) -> Int32 {
+public func expand12 (val_12bit: Word32) -> Int32 {
 	if val_12bit & 0x800 != 0 {
 		return Int32 (val_12bit | 0xFFFFF000)
 	}
@@ -95,7 +93,7 @@ func expand12 (val_12bit: Word32) -> Int32 {
 
 
 // sign expand (20bit -> 32bit)
-func expand20 (val_20bit: Word32) -> Int32 {
+public func expand20 (val_20bit: Word32) -> Int32 {
 	if val_20bit & 0x80000 != 0 {
 		return Int32 (val_20bit | 0xFFF00000)
 	}
