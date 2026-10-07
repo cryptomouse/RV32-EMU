@@ -6,8 +6,16 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #define CR_EN 0x1
+#define CR_REFRESH 0x2
 #define SR_ON 0x1
 #define SR_ERR 0x2
+#define ER_WIDTH 0x1
+#define ER_HEIGHT 0x2
+#define ER_FB 0x4
+#define ER_LINK 0x8
+#define ER_GEOM 0x10
+#define ER_OFF 0x20
+#define ER_FBMAP 0x40
 #define MAX_WIDTH 4096
 #define MAX_HEIGHT 4096
 #define PREFERRED_WINDOW_WIDTH 640
@@ -15,6 +23,7 @@
 static display_MemMap memMap;
 static uint32_t cr;
 static uint32_t sr;
+static uint32_t er;
 static uint32_t width;
 static uint32_t height;
 static uint32_t fb;
@@ -40,7 +49,12 @@ uint32_t display_read32(uint32_t adr) {
 	if (adr == DISPLAY_REG_CR) {
 		return cr;
 	} else if (adr == DISPLAY_REG_SR) {
+		if (er != 0x0) {
+			return sr | SR_ERR;
+		}
 		return sr;
+	} else if (adr == DISPLAY_REG_ER) {
+		return er;
 	} else if (adr == DISPLAY_REG_WIDTH) {
 		return width;
 	} else if (adr == DISPLAY_REG_HEIGHT) {
@@ -69,14 +83,31 @@ void display_write32(uint32_t adr, uint32_t value) {
 		} else if (!enable && enabled) {
 			closeWindow();
 		}
+		if ((value & CR_REFRESH) != 0x0) {
+			refresh();
+		}
+	} else if (adr == DISPLAY_REG_ER) {
+		er = er & ~value;
 	} else if (adr == DISPLAY_REG_WIDTH) {
-		width = value;
+		const uint32_t w = value;
+		if (w == 0 || w > MAX_WIDTH) {
+			er = er | ER_WIDTH;
+		} else {
+			width = w;
+		}
 	} else if (adr == DISPLAY_REG_HEIGHT) {
-		height = value;
+		const uint32_t h = value;
+		if (h == 0 || h > MAX_HEIGHT) {
+			er = er | ER_HEIGHT;
+		} else {
+			height = h;
+		}
 	} else if (adr == DISPLAY_REG_FB) {
-		fb = value;
-	} else if (adr == DISPLAY_REG_REFRESH) {
-		refresh();
+		if ((value & 0x3) != 0x0) {
+			er = er | ER_FB;
+		} else {
+			fb = value;
+		}
 	}
 }
 
@@ -86,13 +117,14 @@ static bool openWindow(void) {
 	sr = 0x0;
 	if (width == 0 || width > MAX_WIDTH || height == 0 || height > MAX_HEIGHT) {
 		printf("display: bad resolution %ux%u\n", width, height);
-		sr = SR_ERR;
+		er = er | ER_GEOM;
 		return false;
 	}
 	if (!sdlReady) {
+		SDL_SetHint("SDL_NO_SIGNAL_HANDLERS", "1");
 		if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 			printf("display: SDL_Init failed: %s\n", SDL_GetError());
-			sr = SR_ERR;
+			er = er | ER_LINK;
 			return false;
 		}
 		sdlReady = true;
@@ -111,7 +143,7 @@ static bool openWindow(void) {
 	if (texture == NULL) {
 		printf("display: cannot create window: %s\n", SDL_GetError());
 		destroyWindow();
-		sr = SR_ERR;
+		er = er | ER_LINK;
 		return false;
 	}
 	activeWidth = width;
@@ -146,17 +178,16 @@ static void destroyWindow(void) {
 
 static void refresh(void) {
 	if (!display_isOn()) {
-		sr = sr | SR_ERR;
+		er = er | ER_OFF;
 		return;
 	}
 	const uint32_t pitch = activeWidth * (uint32_t)sizeof(uint32_t);
 	void *const pixels = memMap(fb, pitch * activeHeight);
 	if (pixels == NULL || (fb & 0x3) != 0x0) {
 		printf("display: bad framebuffer address 0x%08x\n", fb);
-		sr = sr | SR_ERR;
+		er = er | ER_FBMAP;
 		return;
 	}
-	sr = sr & ~SR_ERR;
 	SDL_UpdateTexture(texture, NULL, pixels, (int32_t)pitch);
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
@@ -165,22 +196,33 @@ static void refresh(void) {
 }
 
 static uint32_t eventType(SDL_Event *event);
+static void linkLost(void);
 
-bool display_poll(void) {
+void display_poll(void) {
 	if (!display_isOn()) {
-		return true;
+		return;
 	}
 	SDL_Event event = {0};
 	while (SDL_PollEvent(&event) != 0) {
 		if (eventType(&event) == SDL_QUIT) {
-			return false;
+			linkLost();
+			return;
 		}
 	}
-	return true;
+}
+
+
+static void linkLost(void) {
+	printf("display: link lost\n");
+	destroyWindow();
+	cr = 0x0;
+	sr = 0x0;
+	er = er | ER_LINK;
 }
 
 void display_waitClose(void) {
-	while (display_poll()) {
+	while (display_isOn()) {
+		display_poll();
 		SDL_Delay(16);
 	}
 }

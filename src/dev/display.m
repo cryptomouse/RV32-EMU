@@ -39,7 +39,7 @@ pragma unsafe
 include "libc/ctypes64"
 include "libc/stdio"
 
-import "sdl2" as sdl
+import "../sdl2" as sdl
 
 
 public const regCR = Nat32 0x00

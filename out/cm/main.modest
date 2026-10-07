@@ -1,7 +1,7 @@
 include "libc/stdlib"
 include "libc/stdio"
 import "bus"
-import "display"
+import "dev/display"
 import "hart/hart" as rvHart
 import "hart/csr"
 
@@ -52,10 +52,7 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 		++poll_cnt
 		if poll_cnt == displayPollPeriod {
 			poll_cnt = 0
-			if not display.poll() {
-				printf("\ndisplay window closed\n")
-				break
-			}
+			display.poll()
 		}
 	}
 	if display.isOn() {

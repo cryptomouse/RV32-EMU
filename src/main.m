@@ -5,7 +5,7 @@ include "libc/stdlib"
 include "libc/stdio"
 
 import "bus"
-import "display"
+import "dev/display"
 import "hart/hart" as rvHart
 import "hart/csr" as csr
 

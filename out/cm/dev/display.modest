@@ -1,27 +1,36 @@
 include "libc/ctypes64"
 include "libc/stdio"
-import "sdl2" as sdl
+import "../sdl2" as sdl
 
 
 public const regCR = Nat32 0x00
 public const regSR = Nat32 0x04
-public const regWidth = Nat32 0x08
-public const regHeight = Nat32 0x0C
-public const regFB = Nat32 0x10
-public const regRefresh = Nat32 0x14
+public const regER = Nat32 0x08
+public const regWidth = Nat32 0x0C
+public const regHeight = Nat32 0x10
+public const regFB = Nat32 0x14
 public const regFrame = Nat32 0x18
 
 const crEN = Word32 0x1
+const crREFRESH = Word32 0x2
 
 const srON = Word32 0x1
 const srERR = Word32 0x2
+
+const erWidth = Word32 0x1
+const erHeight = Word32 0x2
+const erFB = Word32 0x4
+const erLINK = Word32 0x8
+const erGEOM = Word32 0x10
+const erOFF = Word32 0x20
+const erFBMAP = Word32 0x40
 
 const maxWidth = Nat32 4096
 const maxHeight = Nat32 4096
 
 // the window is scaled up (by an integer factor) to fit this size
-const preferredWindowWidth = Nat32 1280
-const preferredWindowHeight = Nat32 960
+const preferredWindowWidth = Nat32 640
+const preferredWindowHeight = Nat32 480
 
 
 // Returns host pointer to guest memory [adr, adr + size) or nil
@@ -31,7 +40,8 @@ public type MemMap = *(adr: Nat32, size: Nat32) -> Ptr
 var memMap: MemMap
 
 var cr: Word32
-var sr: Word32
+var sr: Word32// only ON is kept here, ERR is derived from ER
+var er: Word32
 var width: Nat32
 var height: Nat32
 var fb: Nat32
@@ -61,7 +71,12 @@ public func read32 (adr: Nat32) -> Word32 {
 	if adr == regCR {
 		return cr
 	} else if adr == regSR {
+		if er != 0 {
+			return sr | srERR
+		}
 		return sr
+	} else if adr == regER {
+		return er
 	} else if adr == regWidth {
 		return Word32 width
 	} else if adr == regHeight {
@@ -87,14 +102,31 @@ public func write32 (adr: Nat32, value: Word32) -> Unit {
 		} else if not enable and enabled {
 			closeWindow()
 		}
+		if (value & crREFRESH) != 0 {
+			refresh()
+		}
+	} else if adr == regER {
+		er = er & not value
 	} else if adr == regWidth {
-		width = unsafe(Nat32 value)
+		let w: Nat32 = unsafe(Nat32 value)
+		if w == 0 or w > maxWidth {
+			er = er | erWidth
+		} else {
+			width = w
+		}
 	} else if adr == regHeight {
-		height = unsafe(Nat32 value)
+		let h: Nat32 = unsafe(Nat32 value)
+		if h == 0 or h > maxHeight {
+			er = er | erHeight
+		} else {
+			height = h
+		}
 	} else if adr == regFB {
-		fb = unsafe(Nat32 value)
-	} else if adr == regRefresh {
-		refresh()
+		if (value & 3) != 0 {
+			er = er | erFB
+		} else {
+			fb = unsafe(Nat32 value)
+		}
 	}
 }
 
@@ -104,14 +136,15 @@ func openWindow () -> Bool {
 
 	if width == 0 or width > maxWidth or height == 0 or height > maxHeight {
 		printf("display: bad resolution %ux%u\n", width, height)
-		sr = srERR
+		er = er | erGEOM
 		return false
 	}
 
 	if not sdlReady {
+		sdl.setHint("SDL_NO_SIGNAL_HANDLERS", "1")
 		if sdl.init(sdl.initVideo) < 0 {
 			printf("display: SDL_Init failed: %s\n", sdl.getError())
-			sr = srERR
+			er = er | erLINK
 			return false
 		}
 		sdlReady = true
@@ -135,7 +168,7 @@ func openWindow () -> Bool {
 	if texture == nil {
 		printf("display: cannot create window: %s\n", sdl.getError())
 		destroyWindow()
-		sr = srERR
+		er = er | erLINK
 		return false
 	}
 
@@ -174,7 +207,7 @@ func destroyWindow () -> Unit {
 
 func refresh () -> Unit {
 	if not isOn() {
-		sr = sr | srERR
+		er = er | erOFF
 		return
 	}
 
@@ -182,11 +215,9 @@ func refresh () -> Unit {
 	let pixels = memMap(fb, pitch * activeHeight)
 	if pixels == nil or (Word32 fb & 3) != 0 {
 		printf("display: bad framebuffer address 0x%08x\n", fb)
-		sr = sr | srERR
+		er = er | erFBMAP
 		return
 	}
-
-	sr = sr & not srERR
 
 	sdl.updateTexture(texture, nil, pixels, Int32 pitch)
 	sdl.renderClear(renderer)
@@ -197,26 +228,35 @@ func refresh () -> Unit {
 }
 
 
-// Handle window events; returns false if the user closed the window
-public func poll () -> Bool {
+// Handle window events; closing the window is a link failure
+public func poll () -> Unit {
 	if not isOn() {
-		return true
+		return
 	}
 
 	var event: Event
 	while sdl.pollEvent(&event) != 0 {
 		if eventType(&event) == sdl.quit {
-			return false
+			linkLost()
+			return
 		}
 	}
+}
 
-	return true
+
+func linkLost () -> Unit {
+	printf("display: link lost\n")
+	destroyWindow()
+	cr = 0
+	sr = 0
+	er = er | erLINK
 }
 
 
 // Block until the user closes the window
 public func waitClose () -> Unit {
-	while poll() {
+	while isOn() {
+		poll()
 		sdl.delay(16)
 	}
 }

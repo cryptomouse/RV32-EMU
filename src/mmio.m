@@ -2,7 +2,7 @@
 include "libc/ctypes"
 include "libc/stdio"
 
-import "display"
+import "dev/display"
 
 
 const consoleMMIOAdr = Nat32 0x10

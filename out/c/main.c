@@ -44,10 +44,7 @@ int main(int argc, char **argv) {
 		++poll_cnt;
 		if (poll_cnt == DISPLAY_POLL_PERIOD) {
 			poll_cnt = 0;
-			if (!display_poll()) {
-				printf("\ndisplay window closed\n");
-				break;
-			}
+			display_poll();
 		}
 	}
 	if (display_isOn()) {
