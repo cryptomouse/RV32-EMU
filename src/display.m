@@ -7,11 +7,16 @@
 // Registers (32-bit access only, offsets from the device base):
 //   0x00 CR       RW  bit 0 EN: 0->1 opens the window, 1->0 closes it
 //   0x04 SR       RO  bit 0 ON: window is open, bit 1 ERR: last command failed
-//   0x08 WIDTH    RW  framebuffer width in pixels (latched when EN is set)
-//   0x0C HEIGHT   RW  framebuffer height in pixels (latched when EN is set)
-//   0x10 FB       RW  framebuffer address in guest RAM (4-byte aligned)
-//   0x14 REFRESH  WO  any write copies the framebuffer to the screen
-//   0x18 FRAME    RO  number of frames shown since EN was set
+//   0x08 ER       RW1C invalid register writes (sticky, write 1 to clear a bit):
+//                     bit 0 WIDTH, bit 1 HEIGHT, bit 2 FB
+//   0x0C WIDTH    RW  framebuffer width in pixels, 1..4096 (latched when EN is set)
+//   0x10 HEIGHT   RW  framebuffer height in pixels, 1..4096 (latched when EN is set)
+//   0x14 FB       RW  framebuffer address in guest RAM (4-byte aligned)
+//   0x18 REFRESH  WO  any write copies the framebuffer to the screen
+//   0x1C FRAME    RO  number of frames shown since EN was set
+//
+// An invalid value written to WIDTH, HEIGHT or FB is ignored (the register
+// keeps its previous value) and the corresponding bit in ER is set
 
 pragma unsafe
 
@@ -23,16 +28,21 @@ import "sdl2" as sdl
 
 public const regCR = Nat32 0x00
 public const regSR = Nat32 0x04
-public const regWidth = Nat32 0x08
-public const regHeight = Nat32 0x0C
-public const regFB = Nat32 0x10
-public const regRefresh = Nat32 0x14
-public const regFrame = Nat32 0x18
+public const regER = Nat32 0x08
+public const regWidth = Nat32 0x0C
+public const regHeight = Nat32 0x10
+public const regFB = Nat32 0x14
+public const regRefresh = Nat32 0x18
+public const regFrame = Nat32 0x1C
 
 const crEN = Word32 0x1
 
 const srON = Word32 0x1
 const srERR = Word32 0x2
+
+const erWidth = Word32 0x1
+const erHeight = Word32 0x2
+const erFB = Word32 0x4
 
 const maxWidth = Nat32 4096
 const maxHeight = Nat32 4096
@@ -50,6 +60,7 @@ var memMap: MemMap
 
 var cr: Word32
 var sr: Word32
+var er: Word32
 var width: Nat32
 var height: Nat32
 var fb: Nat32
@@ -80,6 +91,8 @@ public func read32 (adr: Nat32) -> Word32 {
 		return cr
 	} else if adr == regSR {
 		return sr
+	} else if adr == regER {
+		return er
 	} else if adr == regWidth {
 		return Word32 width
 	} else if adr == regHeight {
@@ -105,12 +118,28 @@ public func write32 (adr: Nat32, value: Word32) -> Unit {
 		} else if not enable and enabled {
 			closeWindow()
 		}
+	} else if adr == regER {
+		er = er & ~value
 	} else if adr == regWidth {
-		width = unsafe(Nat32 value)
+		let w = unsafe(Nat32 value)
+		if w == 0 or w > maxWidth {
+			er = er | erWidth
+		} else {
+			width = w
+		}
 	} else if adr == regHeight {
-		height = unsafe(Nat32 value)
+		let h = unsafe(Nat32 value)
+		if h == 0 or h > maxHeight {
+			er = er | erHeight
+		} else {
+			height = h
+		}
 	} else if adr == regFB {
-		fb = unsafe(Nat32 value)
+		if (value & 3) != 0 {
+			er = er | erFB
+		} else {
+			fb = unsafe(Nat32 value)
+		}
 	} else if adr == regRefresh {
 		refresh()
 	}

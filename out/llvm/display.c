@@ -8,13 +8,17 @@
 #define CR_EN 0x1
 #define SR_ON 0x1
 #define SR_ERR 0x2
+#define ER_WIDTH 0x1
+#define ER_HEIGHT 0x2
+#define ER_FB 0x4
 #define MAX_WIDTH 4096
 #define MAX_HEIGHT 4096
-#define PREFERRED_WINDOW_WIDTH 1280
-#define PREFERRED_WINDOW_HEIGHT 960
+#define PREFERRED_WINDOW_WIDTH 640
+#define PREFERRED_WINDOW_HEIGHT 480
 static display_MemMap memMap;
 static uint32_t cr;
 static uint32_t sr;
+static uint32_t er;
 static uint32_t width;
 static uint32_t height;
 static uint32_t fb;
@@ -41,6 +45,8 @@ uint32_t display_read32(uint32_t adr) {
 		return cr;
 	} else if (adr == DISPLAY_REG_SR) {
 		return sr;
+	} else if (adr == DISPLAY_REG_ER) {
+		return er;
 	} else if (adr == DISPLAY_REG_WIDTH) {
 		return width;
 	} else if (adr == DISPLAY_REG_HEIGHT) {
@@ -53,8 +59,8 @@ uint32_t display_read32(uint32_t adr) {
 	return 0x0;
 }
 
-static bool open(void);
-static void close(void);
+static bool openWindow(void);
+static void closeWindow(void);
 static void refresh(void);
 
 void display_write32(uint32_t adr, uint32_t value) {
@@ -63,26 +69,42 @@ void display_write32(uint32_t adr, uint32_t value) {
 		const bool enabled = (cr & CR_EN) != 0x0;
 		cr = value & CR_EN;
 		if (enable && !enabled) {
-			if (!open()) {
+			if (!openWindow()) {
 				cr = 0x0;
 			}
 		} else if (!enable && enabled) {
-			close();
+			closeWindow();
 		}
+	} else if (adr == DISPLAY_REG_ER) {
+		er = er & ~value;
 	} else if (adr == DISPLAY_REG_WIDTH) {
-		width = value;
+		const uint32_t w = value;
+		if (w == 0 || w > MAX_WIDTH) {
+			er = er | ER_WIDTH;
+		} else {
+			width = w;
+		}
 	} else if (adr == DISPLAY_REG_HEIGHT) {
-		height = value;
+		const uint32_t h = value;
+		if (h == 0 || h > MAX_HEIGHT) {
+			er = er | ER_HEIGHT;
+		} else {
+			height = h;
+		}
 	} else if (adr == DISPLAY_REG_FB) {
-		fb = value;
+		if ((value & 0x3) != 0x0) {
+			er = er | ER_FB;
+		} else {
+			fb = value;
+		}
 	} else if (adr == DISPLAY_REG_REFRESH) {
 		refresh();
 	}
 }
 
-static void destroy(void);
+static void destroyWindow(void);
 
-static bool open(void) {
+static bool openWindow(void) {
 	sr = 0x0;
 	if (width == 0 || width > MAX_WIDTH || height == 0 || height > MAX_HEIGHT) {
 		printf("display: bad resolution %ux%u\n", width, height);
@@ -110,7 +132,7 @@ static bool open(void) {
 	}
 	if (texture == NULL) {
 		printf("display: cannot create window: %s\n", SDL_GetError());
-		destroy();
+		destroyWindow();
 		sr = SR_ERR;
 		return false;
 	}
@@ -123,12 +145,12 @@ static bool open(void) {
 	return true;
 }
 
-static void close(void) {
-	destroy();
+static void closeWindow(void) {
+	destroyWindow();
 	sr = 0x0;
 }
 
-static void destroy(void) {
+static void destroyWindow(void) {
 	if (texture != NULL) {
 		SDL_DestroyTexture(texture);
 		texture = NULL;
@@ -186,7 +208,7 @@ void display_waitClose(void) {
 }
 
 void display_shutdown(void) {
-	close();
+	closeWindow();
 	if (sdlReady) {
 		SDL_Quit();
 		sdlReady = false;
