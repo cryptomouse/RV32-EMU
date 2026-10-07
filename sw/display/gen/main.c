@@ -29,7 +29,7 @@ int main(void) {
 			if ((e & VM_SYS_DISPLAY_ER_LINK) != 0x0) {
 				printf("display demo: link to the display lost\n");
 			}
-			return 1;
+			break;
 		}
 		++offset;
 	}

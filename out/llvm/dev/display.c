@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #define CR_EN 0x1
-#define CR_REFRESH 0x2
+#define CMD_REFRESH 0x1
 #define SR_ON 0x1
 #define SR_ERR 0x2
 #define ER_WIDTH 0x1
@@ -27,7 +27,7 @@ static uint32_t er;
 static uint32_t width;
 static uint32_t height;
 static uint32_t fb;
-static uint32_t frame;
+static uint32_t framecnt;
 static uint32_t activeWidth;
 static uint32_t activeHeight;
 static bool sdlReady = false;
@@ -62,7 +62,7 @@ uint32_t display_read32(uint32_t adr) {
 	} else if (adr == DISPLAY_REG_FB) {
 		return fb;
 	} else if (adr == DISPLAY_REG_FRAME) {
-		return frame;
+		return framecnt;
 	}
 	return 0x0;
 }
@@ -83,7 +83,8 @@ void display_write32(uint32_t adr, uint32_t value) {
 		} else if (!enable && enabled) {
 			closeWindow();
 		}
-		if ((value & CR_REFRESH) != 0x0) {
+	} else if (adr == DISPLAY_REG_CMD) {
+		if ((value & CMD_REFRESH) != 0x0) {
 			refresh();
 		}
 	} else if (adr == DISPLAY_REG_ER) {
@@ -148,7 +149,7 @@ static bool openWindow(void) {
 	}
 	activeWidth = width;
 	activeHeight = height;
-	frame = 0;
+	framecnt = 0;
 	sr = SR_ON;
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
@@ -192,7 +193,7 @@ static void refresh(void) {
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
 	SDL_RenderPresent(renderer);
-	++frame;
+	++framecnt;
 }
 
 static uint32_t eventType(SDL_Event *event);

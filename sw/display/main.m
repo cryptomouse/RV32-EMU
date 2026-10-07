@@ -34,7 +34,7 @@ func main () -> Int {
 			if (e & displayErLINK) != 0 {
 				printf("display demo: link to the display lost\n")
 			}
-			return 1
+			break
 		}
 
 		++offset

@@ -4,6 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 // 8 MiB
-// frames shown since EN
+// commands (write-only, reads as 0)
 // framebuffer is outside guest RAM
 

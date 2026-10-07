@@ -38,7 +38,7 @@ public func init (framebuffer: *[][]Pixel, width: Nat32, height: Nat32) -> Error
 
 @inline
 public func update () -> Unit {
-	*reg(displayCR) = displayCrEN | displayCrREFRESH
+	*reg(displayCMD) = displayCmdREFRESH
 }
 
 

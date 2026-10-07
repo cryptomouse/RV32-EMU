@@ -1,27 +1,28 @@
 // display.m - display controller (MMIO device backed by SDL2)
 //
 // The framebuffer lives in guest RAM: the guest sets WIDTH, HEIGHT and FB,
-// sets CR.EN (only then the SDL window is created) and sets CR.REFRESH
+// sets CR.EN (only then the SDL window is created) and writes CMD.REFRESH
 // to show the buffer. Pixel format is ARGB8888 (one Word32 per pixel, 0xAARRGGBB)
 //
-// Register roles: commands are written only to CR, status is read only
-// from SR (writes to it are ignored), errors are cleared only through ER
+// Register roles: CR holds the configuration, commands are written only
+// to CMD, status is read only from SR (writes to it are ignored), errors
+// are cleared only through ER
 //
 // Registers (32-bit access only, offsets from the device base):
 //   0x00 CR       RW  bit 0 EN: 0->1 opens the window, 1->0 closes it
-//                     bit 1 REFRESH: write 1 to copy the framebuffer to the
-//                     screen (after EN is handled), always reads as 0
 //   0x04 SR       RO  bit 0 ON: window is open, bit 1 ERR: ER != 0
 //   0x08 ER       RW1C error flags (sticky, write 1 to clear a bit):
 //                     bit 0 WIDTH, bit 1 HEIGHT, bit 2 FB: invalid register write
 //                     bit 3 LINK: link to the display lost (hardware fault)
 //                     bit 4 GEOM: EN set while WIDTH/HEIGHT are not configured
-//                     bit 5 OFF: CR.REFRESH while the display is off
+//                     bit 5 OFF: command written to CMD while the display is off
 //                     bit 6 FBMAP: framebuffer is outside guest RAM
 //   0x0C WIDTH    RW  framebuffer width in pixels, 1..4096 (latched when EN is set)
 //   0x10 HEIGHT   RW  framebuffer height in pixels, 1..4096 (latched when EN is set)
 //   0x14 FB       RW  framebuffer address in guest RAM (4-byte aligned)
 //   0x18 FRAME    RO  number of frames shown since EN was set
+//   0x1C CMD      WO  commands, write 1 to a bit to run it, always reads as 0:
+//                     bit 0 REFRESH: copy the framebuffer to the screen
 //
 // Error reporting: every error first sets its flag in ER; SR.ERR is not
 // stored, it reads as 1 whenever ER != 0. Errors are sticky: nothing clears
@@ -49,9 +50,11 @@ public const regWidth = Nat32 0x0C
 public const regHeight = Nat32 0x10
 public const regFB = Nat32 0x14
 public const regFrame = Nat32 0x18
+public const regCMD = Nat32 0x1C
 
 const crEN = Word32 0x1
-const crREFRESH = Word32 0x2
+
+const cmdREFRESH = Word32 0x1
 
 const srON = Word32 0x1
 const srERR = Word32 0x2
@@ -84,7 +87,7 @@ var er: Word32
 var width: Nat32
 var height: Nat32
 var fb: Nat32
-var frame: Nat32
+var framecnt: Nat32
 
 // geometry the window was created with
 var activeWidth: Nat32
@@ -123,7 +126,7 @@ public func read32 (adr: Nat32) -> Word32 {
 	} else if adr == regFB {
 		return Word32 fb
 	} else if adr == regFrame {
-		return Word32 frame
+		return Word32 framecnt
 	}
 	return 0
 }
@@ -141,7 +144,8 @@ public func write32 (adr: Nat32, value: Word32) -> Unit {
 		} else if not enable and enabled {
 			closeWindow()
 		}
-		if (value & crREFRESH) != 0 {
+	} else if adr == regCMD {
+		if (value & cmdREFRESH) != 0 {
 			refresh()
 		}
 	} else if adr == regER {
@@ -229,7 +233,7 @@ func openWindow () -> Bool {
 
 	activeWidth = width
 	activeHeight = height
-	frame = 0
+	framecnt = 0
 	sr = srON
 
 	// show black screen until the first refresh
@@ -281,7 +285,7 @@ func refresh () -> Unit {
 	sdl.renderCopy(renderer, texture, nil, nil)
 	sdl.renderPresent(renderer)
 
-	++frame
+	++framecnt
 }
 
 
