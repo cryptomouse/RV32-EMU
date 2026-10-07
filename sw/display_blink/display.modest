@@ -2,17 +2,37 @@
 include "../sys/vm_sys"
 
 
-public func init (framebuffer: *[][]Word32, width: Nat32, height: Nat32) -> Bool {
-	*reg(displayWidth) = Word32 width
-	*reg(displayHeight) = Word32 height
-	*reg(displayFB) = Word32 unsafe(Nat32 framebuffer)
-	*reg(displayCR) = displayCrEN
+public type Error = @branded Word32
+public const errorNone = Error 0
+public const errorInvalidWidth = Error 1
+public const errorInvalidHeight = Error 2
+public const errorInvalidFramebuffer = Error 3
+public const errorCannotEnable = Error 4
+public const errorUnknown = Error 0xffffffff
 
+
+public func init (framebuffer: *[][]Word32, width: Nat32, height: Nat32) -> Error {
+	*reg(displayWidth) = Word32 width
+    if *reg(displayWidth) != Word32 width {
+        return errorInvalidWidth
+    }
+
+	*reg(displayHeight) = Word32 height
+    if *reg(displayHeight) != Word32 height {
+        return errorInvalidHeight
+    }
+
+	*reg(displayFB) = Word32 unsafe(Nat32 framebuffer)
+    if *reg(displayFB) != Word32 unsafe(Nat32 framebuffer) {
+        return errorInvalidFramebuffer
+    }
+
+	*reg(displayCR) = displayCrEN
 	if (*reg(displaySR) & displaySrON) == 0 {
-		//printf("display: cannot enable\n")
-		return false
+		return errorCannotEnable
 	}
-	return true
+
+	return errorNone
 }
 
 

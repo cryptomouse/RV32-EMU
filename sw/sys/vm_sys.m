@@ -1,5 +1,8 @@
 // vm_sys - VM memory map (see src/bus.m, src/mmio.m)
 
+pragma unsafe
+
+
 public const ramStart = Word32 0x10000000
 public const ramSize = Word32 0x00800000  // 8 MiB
 

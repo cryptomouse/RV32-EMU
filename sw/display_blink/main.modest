@@ -1,7 +1,5 @@
 // display - display controller demo: animated gradient
 
-pragma unsafe
-
 include "libc/stdio"
 include "../sys/vm_sys"
 
@@ -49,8 +47,9 @@ func main () -> Int {
 
 
 func init () -> Unit {
-	if not display.init(&framebuffer, frameWidth, frameHeight) {
-		printf("display demo: cannot setup display\n")
+	let error = display.init(&framebuffer, frameWidth, frameHeight)
+	if error != display.errorNone {
+		printf("display demo: cannot setup display, error: 0x%08x\n", Nat32 error)
 	}
 
 	irqEnable(mieTimer)
