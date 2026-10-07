@@ -12,6 +12,7 @@ typedef uint32_t display_Error;
 #define DISPLAY_ERROR_INVALID_FRAMEBUFFER ((display_Error)3)
 #define DISPLAY_ERROR_CANNOT_ENABLE ((display_Error)4)
 #define DISPLAY_ERROR_UNKNOWN ((display_Error)0xFFFFFFFFUL)
+typedef uint32_t display_Pixel;
 display_Error display_init(void *framebuffer, uint32_t width, uint32_t height);
 
 __attribute__((always_inline))

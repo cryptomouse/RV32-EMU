@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include "vm_sys.h"
 #include "display.h"
+static volatile uint32_t tickCounter;
 #define FRAME_WIDTH 640
 #define FRAME_HEIGHT 480
-static uint32_t framebuffer[FRAME_HEIGHT][FRAME_WIDTH];
-static volatile uint32_t counter;
+static display_Pixel frameBuffer[FRAME_HEIGHT][FRAME_WIDTH];
 extern void irq_enable(uint32_t mieMask);
 #define MIE_TIMER ((uint32_t)1 << 1)
 
@@ -23,9 +23,9 @@ int main(void) {
 		printf("frame %d\n", display_getFrameCounter());
 		displaySetDot(state);
 		state = !state;
-		while (counter < 100000) {
+		while (tickCounter < 100000) {
 		}
-		counter = 0;
+		tickCounter = 0;
 	}
 	printf("frames shown: %d\n", display_getFrameCounter());
 	return 0;
@@ -33,7 +33,7 @@ int main(void) {
 
 
 static void init(void) {
-	const display_Error error = display_init(framebuffer, FRAME_WIDTH, FRAME_HEIGHT);
+	const display_Error error = display_init(frameBuffer, FRAME_WIDTH, FRAME_HEIGHT);
 	if (error != DISPLAY_ERROR_NONE) {
 		printf("display demo: cannot setup display, error: 0x%08x\n", error);
 	}
@@ -44,14 +44,14 @@ static void displaySetDot(bool state) {
 	const uint32_t x = FRAME_WIDTH / 2;
 	const uint32_t y = FRAME_HEIGHT / 2;
 	if (state) {
-		framebuffer[y][x] = 0xFFFFFFFFUL;
+		frameBuffer[y][x] = (display_Pixel)0xFFFFFFFFUL;
 	} else {
-		framebuffer[y][x] = 0xFF000000UL;
+		frameBuffer[y][x] = (display_Pixel)0xFF000000UL;
 	}
 	display_update();
 }
 
 void __isr(void) {
-	++counter;
+	++tickCounter;
 }
 

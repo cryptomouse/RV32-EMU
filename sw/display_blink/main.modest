@@ -6,14 +6,13 @@ include "../sys/vm_sys"
 import "../sys/display"
 
 
+var tickCounter: @volatile Nat32
+
+
 const frameWidth = Nat32 640
 const frameHeight = Nat32 480
 
-
-// framebuffer in RAM, ARGB8888: [row][column]
-var framebuffer: [frameHeight][frameWidth]Word32
-
-var counter: @volatile Nat32
+var frameBuffer: [frameHeight][frameWidth]display.Pixel
 
 
 // see csr.S
@@ -34,10 +33,10 @@ func main () -> Int {
 		printf("frame %d\n", display.getFrameCounter())
 		displaySetDot(state)
 		state = not state
-		while counter < 100000 {
+		while tickCounter < 100000 {
 			// wait for 100000 interrupts (1 second)
 		}
-		counter = 0
+		tickCounter = 0
 	}
 
 	printf("frames shown: %d\n", display.getFrameCounter())
@@ -47,7 +46,7 @@ func main () -> Int {
 
 
 func init () -> Unit {
-	let error = display.init(&framebuffer, frameWidth, frameHeight)
+	let error = display.init(&frameBuffer, frameWidth, frameHeight)
 	if error != display.errorNone {
 		printf("display demo: cannot setup display, error: 0x%08x\n", Nat32 error)
 	}
@@ -61,9 +60,9 @@ func displaySetDot (state: Bool) -> Unit {
 	let y = frameHeight / 2
 
 	if state {
-		framebuffer[y][x] = 0xFFFFFFFF
+		frameBuffer[y][x] = display.Pixel 0xFFFFFFFF
 	} else {
-		framebuffer[y][x] = 0xFF000000
+		frameBuffer[y][x] = display.Pixel 0xFF000000
 	}
 
 	display.update()
@@ -73,6 +72,6 @@ func displaySetDot (state: Bool) -> Unit {
 // called from _trap (see sys/vect.S)
 @alias("__isr")
 public func isr () -> Unit {
-	++counter
+	++tickCounter
 }
 

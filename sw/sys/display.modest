@@ -10,8 +10,11 @@ public const errorInvalidFramebuffer = Error 3
 public const errorCannotEnable = Error 4
 public const errorUnknown = Error 0xffffffff
 
+// pixel format: ARGB8888
+public type Pixel = @branded Word32
 
-public func init (framebuffer: *[][]Word32, width: Nat32, height: Nat32) -> Error {
+
+public func init (framebuffer: *[][]Pixel, width: Nat32, height: Nat32) -> Error {
     if not setWidth(width) {
         return errorInvalidWidth
     }
@@ -56,7 +59,7 @@ public func setHeight (height: Nat32) -> Bool {
 }
 
 //@inline
-public func setFramebuffer (framebuffer: *[][]Word32) -> Bool {
+public func setFramebuffer (framebuffer: *[][]Pixel) -> Bool {
     *reg(displayFB) = Word32 unsafe(Nat32 framebuffer)
     return getFramebuffer() == framebuffer
 }
@@ -72,8 +75,8 @@ public func getHeight () -> Nat32 {
 }
 
 //@inline
-public func getFramebuffer () -> *[][]Word32 {
-    return unsafe(*[][]Word32 *reg(displayFB))
+public func getFramebuffer () -> *[][]Pixel {
+    return unsafe(*[][]Pixel *reg(displayFB))
 }
 
 //@inline
