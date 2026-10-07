@@ -64,3 +64,13 @@ uint32_t display_getFrameCounter(void) {
 	return *vm_sys_reg(VM_SYS_DISPLAY_FRAME_COUNTER);
 }
 
+
+uint32_t display_getStatus(void) {
+	return *vm_sys_reg(VM_SYS_DISPLAY_SR);
+}
+
+
+uint32_t display_getError(void) {
+	return *vm_sys_reg(VM_SYS_DISPLAY_ER);
+}
+

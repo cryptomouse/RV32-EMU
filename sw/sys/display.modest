@@ -38,7 +38,7 @@ public func init (framebuffer: *[][]Pixel, width: Nat32, height: Nat32) -> Error
 
 @inline
 public func update () -> Unit {
-	*reg(displayRefresh) = 1
+	*reg(displayCR) = displayCrEN | displayCrREFRESH
 }
 
 
@@ -83,4 +83,15 @@ public func getFramebuffer () -> *[][]Pixel {
 public func getFrameCounter () -> Nat32 {
     return Nat32 *reg(displayFrameCounter)
 }
+
+
+public func getStatus () -> Word32 {
+    return *reg(displaySR)
+}
+
+
+public func getError () -> Word32 {
+    return *reg(displayER)
+}
+
 

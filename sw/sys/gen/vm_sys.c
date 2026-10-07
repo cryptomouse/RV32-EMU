@@ -5,4 +5,5 @@
 #include <stdbool.h>
 // 8 MiB
 // frames shown since EN
+// framebuffer is outside guest RAM
 

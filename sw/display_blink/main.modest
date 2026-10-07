@@ -30,6 +30,11 @@ func main () -> Int {
 
 	var state: Bool = true
 	while true {
+		let e = display.getError()
+		if e != 0 {
+			printf("display demo: error: 0x%08x\n", Nat32 e)
+			break
+		}
 		printf("frame %d\n", display.getFrameCounter())
 		displaySetDot(state)
 		state = not state

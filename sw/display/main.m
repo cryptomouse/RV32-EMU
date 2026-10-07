@@ -52,11 +52,11 @@ func main () -> Int {
 	var offset: Nat32 = 0
 	while offset < frames {
 		draw(offset)
-		*reg(displayRefresh) = 1
+		*reg(displayCR) = displayCrEN | displayCrREFRESH
 		++offset
 	}
 
-	printf("frames shown: %d\n", *reg(displayFrame))
+	printf("frames shown: %d\n", *reg(displayFrameCounter))
 
 	return 0
 }

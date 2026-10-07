@@ -1,26 +1,37 @@
 // display.m - display controller (MMIO device backed by SDL2)
 //
 // The framebuffer lives in guest RAM: the guest sets WIDTH, HEIGHT and FB,
-// sets CR.EN (only then the SDL window is created) and writes REFRESH
+// sets CR.EN (only then the SDL window is created) and sets CR.REFRESH
 // to show the buffer. Pixel format is ARGB8888 (one Word32 per pixel, 0xAARRGGBB)
+//
+// Register roles: commands are written only to CR, status is read only
+// from SR (writes to it are ignored), errors are cleared only through ER
 //
 // Registers (32-bit access only, offsets from the device base):
 //   0x00 CR       RW  bit 0 EN: 0->1 opens the window, 1->0 closes it
-//   0x04 SR       RO  bit 0 ON: window is open, bit 1 ERR: last command failed
+//                     bit 1 REFRESH: write 1 to copy the framebuffer to the
+//                     screen (after EN is handled), always reads as 0
+//   0x04 SR       RO  bit 0 ON: window is open, bit 1 ERR: ER != 0
 //   0x08 ER       RW1C error flags (sticky, write 1 to clear a bit):
 //                     bit 0 WIDTH, bit 1 HEIGHT, bit 2 FB: invalid register write
 //                     bit 3 LINK: link to the display lost (hardware fault)
+//                     bit 4 GEOM: EN set while WIDTH/HEIGHT are not configured
+//                     bit 5 OFF: CR.REFRESH while the display is off
+//                     bit 6 FBMAP: framebuffer is outside guest RAM
 //   0x0C WIDTH    RW  framebuffer width in pixels, 1..4096 (latched when EN is set)
 //   0x10 HEIGHT   RW  framebuffer height in pixels, 1..4096 (latched when EN is set)
 //   0x14 FB       RW  framebuffer address in guest RAM (4-byte aligned)
-//   0x18 REFRESH  WO  any write copies the framebuffer to the screen
-//   0x1C FRAME    RO  number of frames shown since EN was set
+//   0x18 FRAME    RO  number of frames shown since EN was set
+//
+// Error reporting: every error first sets its flag in ER; SR.ERR is not
+// stored, it reads as 1 whenever ER != 0. Errors are sticky: nothing clears
+// them on success, the guest acknowledges them by writing 1s to ER
 //
 // An invalid value written to WIDTH, HEIGHT or FB is ignored (the register
 // keeps its previous value) and the corresponding bit in ER is set
 //
 // Closing the window plays the role of a physical link failure: the device
-// drops CR.EN and SR.ON, sets SR.ERR and ER.LINK. The guest keeps running and
+// drops CR.EN and SR.ON and sets ER.LINK. The guest keeps running and
 // may set CR.EN again to reconnect
 
 pragma unsafe
@@ -37,10 +48,10 @@ public const regER = Nat32 0x08
 public const regWidth = Nat32 0x0C
 public const regHeight = Nat32 0x10
 public const regFB = Nat32 0x14
-public const regRefresh = Nat32 0x18
-public const regFrame = Nat32 0x1C
+public const regFrame = Nat32 0x18
 
 const crEN = Word32 0x1
+const crREFRESH = Word32 0x2
 
 const srON = Word32 0x1
 const srERR = Word32 0x2
@@ -49,6 +60,9 @@ const erWidth = Word32 0x1
 const erHeight = Word32 0x2
 const erFB = Word32 0x4
 const erLINK = Word32 0x8
+const erGEOM = Word32 0x10
+const erOFF = Word32 0x20
+const erFBMAP = Word32 0x40
 
 const maxWidth = Nat32 4096
 const maxHeight = Nat32 4096
@@ -65,7 +79,7 @@ public type MemMap = *(adr: Nat32, size: Nat32) -> Ptr
 var memMap: MemMap
 
 var cr: Word32
-var sr: Word32
+var sr: Word32  // only ON is kept here, ERR is derived from ER
 var er: Word32
 var width: Nat32
 var height: Nat32
@@ -96,6 +110,9 @@ public func read32 (adr: Nat32) -> Word32 {
 	if adr == regCR {
 		return cr
 	} else if adr == regSR {
+		if er != 0 {
+			return sr | srERR
+		}
 		return sr
 	} else if adr == regER {
 		return er
@@ -124,6 +141,9 @@ public func write32 (adr: Nat32, value: Word32) -> Unit {
 		} else if not enable and enabled {
 			closeWindow()
 		}
+		if (value & crREFRESH) != 0 {
+			refresh()
+		}
 	} else if adr == regER {
 		er = er & ~value
 	} else if adr == regWidth {
@@ -146,8 +166,6 @@ public func write32 (adr: Nat32, value: Word32) -> Unit {
 		} else {
 			fb = unsafe(Nat32 value)
 		}
-	} else if adr == regRefresh {
-		refresh()
 	}
 }
 
@@ -157,7 +175,7 @@ func openWindow () -> Bool {
 
 	if width == 0 or width > maxWidth or height == 0 or height > maxHeight {
 		printf("display: bad resolution %ux%u\n", width, height)
-		sr = srERR
+		er = er | erGEOM
 		return false
 	}
 
@@ -167,7 +185,7 @@ func openWindow () -> Bool {
 		sdl.setHint("SDL_NO_SIGNAL_HANDLERS", "1")
 		if sdl.init(sdl.initVideo) < 0 {
 			printf("display: SDL_Init failed: %s\n", sdl.getError())
-			sr = srERR
+			er = er | erLINK
 			return false
 		}
 		sdlReady = true
@@ -205,7 +223,7 @@ func openWindow () -> Bool {
 	if texture == nil {
 		printf("display: cannot create window: %s\n", sdl.getError())
 		destroyWindow()
-		sr = srERR
+		er = er | erLINK
 		return false
 	}
 
@@ -246,7 +264,7 @@ func destroyWindow () -> Unit {
 
 func refresh () -> Unit {
 	if not isOn() {
-		sr = sr | srERR
+		er = er | erOFF
 		return
 	}
 
@@ -254,11 +272,9 @@ func refresh () -> Unit {
 	let pixels = memMap(fb, pitch * activeHeight)
 	if pixels == nil or (Word32 fb & 3) != 0 {
 		printf("display: bad framebuffer address 0x%08x\n", fb)
-		sr = sr | srERR
+		er = er | erFBMAP
 		return
 	}
-
-	sr = sr & ~srERR
 
 	sdl.updateTexture(texture, nil, pixels, Int32 pitch)
 	sdl.renderClear(renderer)
@@ -289,7 +305,7 @@ func linkLost () -> Unit {
 	printf("display: link lost\n")
 	destroyWindow()
 	cr = 0
-	sr = srERR
+	sr = 0
 	er = er | erLINK
 }
 

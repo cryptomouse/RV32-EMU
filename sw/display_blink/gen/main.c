@@ -20,6 +20,11 @@ int main(void) {
 	init();
 	bool state = true;
 	while (true) {
+		const uint32_t e = display_getError();
+		if (e != 0x0) {
+			printf("display demo: error: 0x%08x\n", e);
+			break;
+		}
 		printf("frame %d\n", display_getFrameCounter());
 		displaySetDot(state);
 		state = !state;

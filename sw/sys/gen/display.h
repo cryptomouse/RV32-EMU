@@ -17,7 +17,7 @@ display_Error display_init(void *framebuffer, uint32_t width, uint32_t height);
 
 __attribute__((always_inline))
 inline void display_update(void) {
-	*vm_sys_reg(VM_SYS_DISPLAY_REFRESH) = 0x1;
+	*vm_sys_reg(VM_SYS_DISPLAY_CR) = VM_SYS_DISPLAY_CR_EN | VM_SYS_DISPLAY_CR_REFRESH;
 }
 //
 // Getters and setters for the display controller registers
@@ -29,5 +29,7 @@ uint32_t display_getWidth(void);
 uint32_t display_getHeight(void);
 void *display_getFramebuffer(void);
 uint32_t display_getFrameCounter(void);
+uint32_t display_getStatus(void);
+uint32_t display_getError(void);
 #endif
 
