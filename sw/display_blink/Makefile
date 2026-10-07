@@ -34,7 +34,7 @@ all: modest
 	$(CC) $(CFLAGS) $(SYS)/gen/system.c -c -o system.o
 	$(CC) $(CFLAGS) $(SYS)/gen/console.c -c -o console.o
 	$(CC) $(CFLAGS) $(SYS)/gen/printf.c -c -o printf.o
-	$(CC) $(CFLAGS) $(GEN)/display.c -c -o display.o
+	$(CC) $(CFLAGS) $(SYS)/gen/display.c -c -o display.o
 	$(CC) $(CFLAGS) $(GEN)/main.c -c -o main.o
 
 
@@ -59,7 +59,6 @@ modest:
 	$(MAKE) -C $(SYS)
 	mkdir -p $(GEN)
 	$(MODEST) -o $(GEN)/main $(MODEST_OPTS) main.modest
-	$(MODEST) -o $(GEN)/display $(MODEST_OPTS) display.modest
 
 
 clean:

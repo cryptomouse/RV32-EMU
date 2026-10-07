@@ -19,13 +19,13 @@ public const consolePrintUInt32HexAdr = consoleMMIOAdr | 0x1C
 
 // display controller (see src/display.m)
 public const displayMMIOAdr = mmioStart | 0x1000
-public const displayCR = displayMMIOAdr | 0x00       // bit 0 EN: open/close the window
-public const displaySR = displayMMIOAdr | 0x04       // bit 0 ON, bit 1 ERR
+public const displayCR = displayMMIOAdr | 0x00            // bit 0 EN: open/close the window
+public const displaySR = displayMMIOAdr | 0x04            // bit 0 ON, bit 1 ERR
 public const displayWidth = displayMMIOAdr | 0x08
 public const displayHeight = displayMMIOAdr | 0x0C
-public const displayFB = displayMMIOAdr | 0x10       // framebuffer address in RAM (ARGB8888)
-public const displayRefresh = displayMMIOAdr | 0x14  // write: show the framebuffer
-public const displayFrame = displayMMIOAdr | 0x18    // frames shown since EN
+public const displayFB = displayMMIOAdr | 0x10            // framebuffer address in RAM (ARGB8888)
+public const displayRefresh = displayMMIOAdr | 0x14       // write: show the framebuffer
+public const displayFrameCounter = displayMMIOAdr | 0x18  // frames shown since EN
 
 public const displayCrEN = Word32 0x1
 public const displaySrON = Word32 0x1

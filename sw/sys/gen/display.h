@@ -13,6 +13,20 @@ typedef uint32_t display_Error;
 #define DISPLAY_ERROR_CANNOT_ENABLE ((display_Error)4)
 #define DISPLAY_ERROR_UNKNOWN ((display_Error)0xFFFFFFFFUL)
 display_Error display_init(void *framebuffer, uint32_t width, uint32_t height);
-void display_update(void);
+
+__attribute__((always_inline))
+inline void display_update(void) {
+	*vm_sys_reg(VM_SYS_DISPLAY_REFRESH) = 0x1;
+}
+//
+// Getters and setters for the display controller registers
+//
+bool display_setWidth(uint32_t width);
+bool display_setHeight(uint32_t height);
+bool display_setFramebuffer(void *framebuffer);
+uint32_t display_getWidth(void);
+uint32_t display_getHeight(void);
+void *display_getFramebuffer(void);
+uint32_t display_getFrameCounter(void);
 #endif
 

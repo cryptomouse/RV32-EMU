@@ -1,0 +1,83 @@
+
+include "../sys/vm_sys"
+
+
+public type Error = @branded Word32
+public const errorNone = Error 0
+public const errorInvalidWidth = Error 1
+public const errorInvalidHeight = Error 2
+public const errorInvalidFramebuffer = Error 3
+public const errorCannotEnable = Error 4
+public const errorUnknown = Error 0xffffffff
+
+
+public func init (framebuffer: *[][]Word32, width: Nat32, height: Nat32) -> Error {
+    if not setWidth(width) {
+        return errorInvalidWidth
+    }
+
+    if not setHeight(height) {
+        return errorInvalidHeight
+    }
+
+    if not setFramebuffer(framebuffer) {
+        return errorInvalidFramebuffer
+    }
+
+	*reg(displayCR) = displayCrEN
+	if (*reg(displaySR) & displaySrON) == 0 {
+		return errorCannotEnable
+	}
+
+	return errorNone
+}
+
+
+@inline
+public func update () -> Unit {
+	*reg(displayRefresh) = 1
+}
+
+
+//
+// Getters and setters for the display controller registers
+//
+
+//@inline
+public func setWidth (width: Nat32) -> Bool {
+    *reg(displayWidth) = Word32 width
+    return getWidth() == width
+}
+
+//@inline
+public func setHeight (height: Nat32) -> Bool {
+    *reg(displayHeight) = Word32 height
+    return getHeight() == height
+}
+
+//@inline
+public func setFramebuffer (framebuffer: *[][]Word32) -> Bool {
+    *reg(displayFB) = Word32 unsafe(Nat32 framebuffer)
+    return getFramebuffer() == framebuffer
+}
+
+//@inline
+public func getWidth () -> Nat32 {
+    return Nat32 *reg(displayWidth)
+}
+
+//@inline
+public func getHeight () -> Nat32 {
+    return Nat32 *reg(displayHeight)
+}
+
+//@inline
+public func getFramebuffer () -> *[][]Word32 {
+    return unsafe(*[][]Word32 *reg(displayFB))
+}
+
+//@inline
+public func getFrameCounter () -> Nat32 {
+    return Nat32 *reg(displayFrameCounter)
+}
+

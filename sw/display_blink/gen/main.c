@@ -20,14 +20,14 @@ int main(void) {
 	init();
 	bool state = true;
 	while (true) {
-		printf("frame %d\n", *vm_sys_reg(VM_SYS_DISPLAY_FRAME));
+		printf("frame %d\n", display_getFrameCounter());
 		displaySetDot(state);
 		state = !state;
 		while (counter < 100000) {
 		}
 		counter = 0;
 	}
-	printf("frames shown: %d\n", *vm_sys_reg(VM_SYS_DISPLAY_FRAME));
+	printf("frames shown: %d\n", display_getFrameCounter());
 	return 0;
 }
 
