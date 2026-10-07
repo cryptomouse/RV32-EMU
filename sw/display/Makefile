@@ -33,11 +33,12 @@ all: modest
 	$(CC) $(CFLAGS) $(SYS)/gen/system.c -c -o system.o
 	$(CC) $(CFLAGS) $(SYS)/gen/console.c -c -o console.o
 	$(CC) $(CFLAGS) $(SYS)/gen/printf.c -c -o printf.o
+	$(CC) $(CFLAGS) $(SYS)/gen/display.c -c -o display.o
 	$(CC) $(CFLAGS) $(GEN)/main.c -c -o main.o
 
 
 	# link OBJects to ELF
-	$(CC) $(CFLAGS) $(LDFLAGS) -nostdlib -o main.elf -T $(LDSCRIPT) vect.o startup.o system.o console.o printf.o base.o main.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -nostdlib -o main.elf -T $(LDSCRIPT) vect.o startup.o system.o console.o printf.o base.o display.o main.o
 
 	rm *.o
 
