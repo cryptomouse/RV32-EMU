@@ -34,6 +34,7 @@ public const displaySrERR = Word32 0x2
 public const displayErWidth = Word32 0x1
 public const displayErHeight = Word32 0x2
 public const displayErFB = Word32 0x4
+public const displayErLINK = Word32 0x8     // link to the display lost
 
 
 @inline

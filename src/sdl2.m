@@ -64,6 +64,8 @@ public func init (flags: Word32) -> Int32
 public func shutdown () -> Unit
 @extern("C", "SDL_GetError")
 public func getError () -> *ConstCharStr
+@extern("C", "SDL_SetHint")
+public func setHint (name: *ConstCharStr, value: *ConstCharStr) -> @unused Int32
 @extern("C", "SDL_Delay")
 public func delay (ms: Nat32) -> Unit
 

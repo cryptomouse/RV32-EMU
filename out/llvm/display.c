@@ -11,6 +11,7 @@
 #define ER_WIDTH 0x1
 #define ER_HEIGHT 0x2
 #define ER_FB 0x4
+#define ER_LINK 0x8
 #define MAX_WIDTH 4096
 #define MAX_HEIGHT 4096
 #define PREFERRED_WINDOW_WIDTH 640
@@ -112,6 +113,7 @@ static bool openWindow(void) {
 		return false;
 	}
 	if (!sdlReady) {
+		SDL_SetHint("SDL_NO_SIGNAL_HANDLERS", "1");
 		if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 			printf("display: SDL_Init failed: %s\n", SDL_GetError());
 			sr = SR_ERR;
@@ -187,22 +189,33 @@ static void refresh(void) {
 }
 
 static uint32_t eventType(SDL_Event *event);
+static void linkLost(void);
 
-bool display_poll(void) {
+void display_poll(void) {
 	if (!display_isOn()) {
-		return true;
+		return;
 	}
 	SDL_Event event = {0};
 	while (SDL_PollEvent(&event) != 0) {
 		if (eventType(&event) == SDL_QUIT) {
-			return false;
+			linkLost();
+			return;
 		}
 	}
-	return true;
+}
+
+
+static void linkLost(void) {
+	printf("display: link lost\n");
+	destroyWindow();
+	cr = 0x0;
+	sr = SR_ERR;
+	er = er | ER_LINK;
 }
 
 void display_waitClose(void) {
-	while (display_poll()) {
+	while (display_isOn()) {
+		display_poll();
 		SDL_Delay(16);
 	}
 }

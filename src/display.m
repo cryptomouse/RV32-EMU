@@ -7,8 +7,9 @@
 // Registers (32-bit access only, offsets from the device base):
 //   0x00 CR       RW  bit 0 EN: 0->1 opens the window, 1->0 closes it
 //   0x04 SR       RO  bit 0 ON: window is open, bit 1 ERR: last command failed
-//   0x08 ER       RW1C invalid register writes (sticky, write 1 to clear a bit):
-//                     bit 0 WIDTH, bit 1 HEIGHT, bit 2 FB
+//   0x08 ER       RW1C error flags (sticky, write 1 to clear a bit):
+//                     bit 0 WIDTH, bit 1 HEIGHT, bit 2 FB: invalid register write
+//                     bit 3 LINK: link to the display lost (hardware fault)
 //   0x0C WIDTH    RW  framebuffer width in pixels, 1..4096 (latched when EN is set)
 //   0x10 HEIGHT   RW  framebuffer height in pixels, 1..4096 (latched when EN is set)
 //   0x14 FB       RW  framebuffer address in guest RAM (4-byte aligned)
@@ -17,6 +18,10 @@
 //
 // An invalid value written to WIDTH, HEIGHT or FB is ignored (the register
 // keeps its previous value) and the corresponding bit in ER is set
+//
+// Closing the window plays the role of a physical link failure: the device
+// drops CR.EN and SR.ON, sets SR.ERR and ER.LINK. The guest keeps running and
+// may set CR.EN again to reconnect
 
 pragma unsafe
 
@@ -43,6 +48,7 @@ const srERR = Word32 0x2
 const erWidth = Word32 0x1
 const erHeight = Word32 0x2
 const erFB = Word32 0x4
+const erLINK = Word32 0x8
 
 const maxWidth = Nat32 4096
 const maxHeight = Nat32 4096
@@ -156,6 +162,9 @@ func openWindow () -> Bool {
 	}
 
 	if not sdlReady {
+		// keep Ctrl+C killing the emulator: otherwise SDL turns it into SDL_QUIT,
+		// which we treat as a closed window
+		sdl.setHint("SDL_NO_SIGNAL_HANDLERS", "1")
 		if sdl.init(sdl.initVideo) < 0 {
 			printf("display: SDL_Init failed: %s\n", sdl.getError())
 			sr = srERR
@@ -260,26 +269,35 @@ func refresh () -> Unit {
 }
 
 
-// Handle window events; returns false if the user closed the window
-public func poll () -> Bool {
+// Handle window events; closing the window is a link failure
+public func poll () -> Unit {
 	if not isOn() {
-		return true
+		return
 	}
 
 	var event: sdl.Event
 	while sdl.pollEvent(&event) != 0 {
 		if eventType(&event) == sdl.quit {
-			return false
+			linkLost()
+			return
 		}
 	}
+}
 
-	return true
+
+func linkLost () -> Unit {
+	printf("display: link lost\n")
+	destroyWindow()
+	cr = 0
+	sr = srERR
+	er = er | erLINK
 }
 
 
 // Block until the user closes the window
 public func waitClose () -> Unit {
-	while poll() {
+	while isOn() {
+		poll()
 		sdl.delay(16)
 	}
 }

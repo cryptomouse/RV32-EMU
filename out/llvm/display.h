@@ -19,7 +19,7 @@ void display_init(display_MemMap mm);
 bool display_isOn(void);
 uint32_t display_read32(uint32_t adr);
 void display_write32(uint32_t adr, uint32_t value);
-bool display_poll(void);
+void display_poll(void);
 void display_waitClose(void);
 void display_shutdown(void);
 #endif

@@ -61,10 +61,7 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 		++poll_cnt
 		if poll_cnt == displayPollPeriod {
 			poll_cnt = 0
-			if not display.poll() {
-				printf("\ndisplay window closed\n")
-				break
-			}
+			display.poll()
 		}
 	}
 
