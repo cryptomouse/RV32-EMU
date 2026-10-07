@@ -5,11 +5,15 @@ include "libc/stdlib"
 include "libc/stdio"
 
 import "bus"
+import "display"
 import "hart/hart" as rvHart
 import "hart/csr" as csr
 
 
 var hart: rvHart.Hart
+
+// how often (in hart cycles) window events are handled
+const displayPollPeriod = Nat32 100000
 
 
 func main (argc: Int, argv: *[]*Str8) -> Int {
@@ -32,10 +36,12 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 	}
 
 	rvHart.init(&hart, 0, &busctl)
+	display.init(&bus.ramPtr)
 
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n")
 
 	var timer_cnt: Nat32 = 0
+	var poll_cnt: Nat32 = 0
 
 	while true {
 		// Hart beat
@@ -50,7 +56,24 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 			//printf("Timer interrupt generated\n")
 			rvHart.interrupt(&hart, rvHart.intSysTimer)
 		}
+
+		// Keep the display window responsive
+		++poll_cnt
+		if poll_cnt == displayPollPeriod {
+			poll_cnt = 0
+			if not display.poll() {
+				printf("\ndisplay window closed\n")
+				break
+			}
+		}
 	}
+
+	// The program has finished but its picture stays on the screen
+	if display.isOn() {
+		printf("\nclose the display window to exit\n")
+		display.waitClose()
+	}
+	display.shutdown()
 
 	printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
 	printf("mcycle = %u\n", rvHart.getCsr(&hart, csr.mcycleRegno))

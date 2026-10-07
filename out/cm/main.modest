@@ -1,12 +1,15 @@
-
 include "libc/stdlib"
 include "libc/stdio"
 import "bus"
+import "display"
 import "hart/hart" as rvHart
 import "hart/csr"
 
 
 var hart: Hart
+
+// how often (in hart cycles) window events are handled
+const displayPollPeriod = Nat32 100000
 
 
 @nonstatic
@@ -30,10 +33,12 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 	}
 
 	rvHart.init(&hart, 0, &busctl)
+	display.init(&bus.ramPtr)
 
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n")
 
 	var timer_cnt: Nat32 = 0
+	var poll_cnt: Nat32 = 0
 
 	while true {
 		if not rvHart.cycle(&hart) {
@@ -44,7 +49,20 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 			timer_cnt = 0
 			rvHart.interrupt(&hart, rvHart.intSysTimer)
 		}
+		++poll_cnt
+		if poll_cnt == displayPollPeriod {
+			poll_cnt = 0
+			if not display.poll() {
+				printf("\ndisplay window closed\n")
+				break
+			}
+		}
 	}
+	if display.isOn() {
+		printf("\nclose the display window to exit\n")
+		display.waitClose()
+	}
+	display.shutdown()
 
 	printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
 	printf("mcycle = %u\n", rvHart.getCsr(&hart, csr.mcycleRegno))

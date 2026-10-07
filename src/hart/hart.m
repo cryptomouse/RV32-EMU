@@ -527,7 +527,8 @@ func execL (hart: *Hart, instr: Word32) -> Unit {
 	let rs1 = extractRs1(instr)
 	let rs2 = extractRs2(instr)
 
-	let adr = Nat32 (Int32 hart.regs[rs1] + imm)
+	// WAS WRONG: let adr = Nat32 (Int32 hart.regs[rs1] + imm)  // Modest bug
+	let adr = Nat32 Word32 (Int32 hart.regs[rs1] + imm)
 
 	var result: Word32
 

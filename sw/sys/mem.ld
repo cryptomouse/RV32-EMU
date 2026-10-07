@@ -7,7 +7,7 @@ __stack_size = 0x1000;
 MEMORY
 {
 	ROM (rx) : ORIGIN = 0x00000000, LENGTH = 0x100000
-	RAM (rw) : ORIGIN = 0x10000000, LENGTH = 1024*16
+	RAM (rw) : ORIGIN = 0x10000000, LENGTH = 8M
 }
 
 

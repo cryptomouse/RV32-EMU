@@ -6,16 +6,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "mmio.h"
-struct __anonymous_struct_1 {uint32_t begin; uint32_t end;};
+struct __anonymous_struct_6 {uint32_t begin; uint32_t end;};
 #define SHOW_TEXT false
-#define RAM_SIZE (16 * 1024)
+#define RAM_SIZE ((uint32_t)8 * 1024 * 1024)
 #define RAM_START 0x10000000
 #define RAM_END (RAM_START + RAM_SIZE)
 #define ROM_SIZE 0x100000
 #define ROM_START 0x00000000
 #define ROM_END (ROM_START + ROM_SIZE)
-#define MMIO_SIZE 0xFFFF
-#define MMIO_START 0xF00C0000UL
+#define MMIO_SIZE 0x01000000
+#define MMIO_START 0xF0000000UL
 #define MMIO_END (MMIO_START + MMIO_SIZE)
 #define RAM_REGION {.begin = RAM_START, .end = RAM_END}
 #define ROM_REGION {.begin = ROM_START, .end = ROM_END}
@@ -24,19 +24,19 @@ static uint8_t ram[RAM_SIZE];
 static uint8_t rom[ROM_SIZE];
 
 __attribute__((always_inline))
-static inline bool isAdressInRegion(uint32_t x, struct __anonymous_struct_1 region);
+static inline bool isAdressInRegion(uint32_t x, struct __anonymous_struct_6 region);
 static uint32_t readFrom(void *ptr, uint32_t adr, uint8_t size);
 
 uint32_t bus_read(uint32_t adr, uint8_t size) {
-	if (isAdressInRegion(adr, (struct __anonymous_struct_1){.begin = RAM_START, .end = RAM_END})) {
+	if (isAdressInRegion(adr, (struct __anonymous_struct_6){.begin = RAM_START, .end = RAM_END})) {
 		const uint32_t offset = adr - ((struct {const uint32_t begin; const uint32_t end;})RAM_REGION).begin;
 		void *const ptr = &ram[offset];
 		return readFrom(ptr, adr, size);
-	} else if (isAdressInRegion(adr, (struct __anonymous_struct_1){.begin = ROM_START, .end = ROM_END})) {
+	} else if (isAdressInRegion(adr, (struct __anonymous_struct_6){.begin = ROM_START, .end = ROM_END})) {
 		const uint32_t offset = adr - ((struct {const uint32_t begin; const uint32_t end;})ROM_REGION).begin;
 		void *const ptr = &rom[offset];
 		return readFrom(ptr, adr, size);
-	} else if (isAdressInRegion(adr, (struct __anonymous_struct_1){.begin = MMIO_START, .end = MMIO_END})) {
+	} else if (isAdressInRegion(adr, (struct __anonymous_struct_6){.begin = MMIO_START, .end = MMIO_END})) {
 		const uint32_t offset = adr - ((struct {const uint32_t begin; const uint32_t end;})MMIO_REGION).begin;
 		if (size == 1) {
 			return (uint32_t)mmio_read8(offset);
@@ -54,11 +54,11 @@ uint32_t bus_read(uint32_t adr, uint8_t size) {
 static void writeTo(void *ptr, uint32_t adr, uint32_t value, uint8_t size);
 
 void bus_write(uint32_t adr, uint32_t value, uint8_t size) {
-	if (isAdressInRegion(adr, (struct __anonymous_struct_1){.begin = RAM_START, .end = RAM_END})) {
+	if (isAdressInRegion(adr, (struct __anonymous_struct_6){.begin = RAM_START, .end = RAM_END})) {
 		const uint32_t offset = adr - ((struct {const uint32_t begin; const uint32_t end;})RAM_REGION).begin;
 		void *const ptr = &ram[offset];
 		writeTo(ptr, adr, value, size);
-	} else if (isAdressInRegion(adr, (struct __anonymous_struct_1){.begin = MMIO_START, .end = MMIO_END})) {
+	} else if (isAdressInRegion(adr, (struct __anonymous_struct_6){.begin = MMIO_START, .end = MMIO_END})) {
 		const uint32_t offset = adr - ((struct {const uint32_t begin; const uint32_t end;})MMIO_REGION).begin;
 		if (size == 1) {
 			mmio_write8(offset, (uint8_t)value);
@@ -67,7 +67,7 @@ void bus_write(uint32_t adr, uint32_t value, uint8_t size) {
 		} else if (size == 4) {
 			mmio_write32(offset, value);
 		}
-	} else if (isAdressInRegion(adr, (struct __anonymous_struct_1){.begin = ROM_START, .end = ROM_END})) {
+	} else if (isAdressInRegion(adr, (struct __anonymous_struct_6){.begin = ROM_START, .end = ROM_END})) {
 		bus_memoryViolation('w', adr);
 	} else {
 		bus_memoryViolation('w', adr);
@@ -95,8 +95,16 @@ static void writeTo(void *ptr, uint32_t adr, uint32_t value, uint8_t size) {
 	}
 }
 
+
+void *bus_ramPtr(uint32_t adr, uint32_t size) {
+	if (adr < RAM_START || adr >= RAM_END || size > RAM_END - adr) {
+		return NULL;
+	}
+	return &ram[adr - RAM_START];
+}
+
 __attribute__((always_inline))
-static inline bool isAdressInRegion(uint32_t x, struct __anonymous_struct_1 region) {
+static inline bool isAdressInRegion(uint32_t x, struct __anonymous_struct_6 region) {
 	return x >= region.begin && x < region.end;
 }
 static uint32_t memviolationCnt = 0;

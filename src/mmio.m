@@ -2,6 +2,8 @@
 include "libc/ctypes"
 include "libc/stdio"
 
+import "display"
+
 
 const consoleMMIOAdr = Nat32 0x10
 const consolePutAdr = consoleMMIOAdr + 0
@@ -14,6 +16,9 @@ const consolePrintUInt32HexAdr = consoleMMIOAdr + Nat32 0x1C
 
 const consolePrintInt64Adr = consoleMMIOAdr + Nat32 0x20
 const consolePrintUInt64Adr = consoleMMIOAdr + Nat32 0x28
+
+const displayMMIOAdr = Nat32 0x1000
+const displayMMIOSize = Nat32 0x1000
 
 
 
@@ -49,6 +54,9 @@ public func write32 (adr: Nat32, value: Word32) -> Unit {
 	} else if adr == consolePrintUInt32HexAdr {
 		printf("%x", value)
 		return
+	} else if isDisplayAdr(adr) {
+		display.write32(adr - displayMMIOAdr, value)
+		return
 	}
 }
 
@@ -62,6 +70,15 @@ public func read16 (adr: Nat32) -> Word16 {
 }
 
 public func read32 (adr: Nat32) -> Word32 {
-	return 0  // TODO: Not implemented.
+	if isDisplayAdr(adr) {
+		return display.read32(adr - displayMMIOAdr)
+	}
+	return 0
+}
+
+
+@inline
+func isDisplayAdr (adr: Nat32) -> Bool {
+	return adr >= displayMMIOAdr and adr < displayMMIOAdr + displayMMIOSize
 }
 

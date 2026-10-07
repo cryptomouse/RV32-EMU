@@ -14,7 +14,7 @@ const showText = false
 
 
 // see mem.ld
-const ramSize = 16 * 1024
+const ramSize = Nat32 8 * 1024 * 1024
 const ramStart = Nat32 0x10000000
 const ramEnd = ramStart + ramSize
 
@@ -22,8 +22,8 @@ const romSize = Nat32 0x100000
 const romStart = Nat32 0x00000000
 const romEnd = romStart + romSize
 
-const mmioSize = Nat32 0xFFFF
-const mmioStart = Nat32 0xF00C0000
+const mmioSize = Nat32 0x01000000
+const mmioStart = Nat32 0xF0000000
 const mmioEnd = mmioStart + mmioSize
 
 
@@ -110,6 +110,15 @@ func writeTo (ptr: Ptr, adr: Nat32, value: Word32, size: Nat8) -> Unit {
 	} else if size == 4 {
 		*(*Word32 ptr) = value
 	}
+}
+
+
+// Host pointer to guest RAM [adr, adr + size) or nil if it is not entirely in RAM
+public func ramPtr (adr: Nat32, size: Nat32) -> Ptr {
+	if adr < ramStart or adr >= ramEnd or size > ramEnd - adr {
+		return nil
+	}
+	return &ram[adr - ramStart]
 }
 
 

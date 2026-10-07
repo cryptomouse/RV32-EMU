@@ -333,7 +333,7 @@ static void execL(struct hart_hart *hart, uint32_t instr) {
 	const uint8_t rd = decode_extractRd(instr);
 	const uint8_t rs1 = decode_extractRs1(instr);
 	const uint8_t rs2 = decode_extractRs2(instr);
-	const uint32_t adr = (uint32_t)abs(((int32_t)hart->regs[rs1] + imm));
+	const uint32_t adr = (uint32_t)((int32_t)hart->regs[rs1] + imm);
 	uint32_t result = 0x0;
 	if (funct3 == 0x0) {
 		trace(hart->pc, "lb x%d, %d(x%d)\n", rd, imm, rs1);

@@ -2,6 +2,7 @@
 #if !defined(MMIO_H)
 #define MMIO_H
 #include <stdio.h>
+#include "display.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>

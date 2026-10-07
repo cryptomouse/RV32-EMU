@@ -151,6 +151,56 @@ declare void @perror(%ConstCharStr* %str)
 ; end from import "builtin"
 ; from included ctypes
 
+; from import "sdl"
+%Window = type {
+};
+
+%Renderer = type {
+};
+
+%Texture = type {
+};
+
+%Rect = type {
+	%Int32,
+	%Int32,
+	%Int32,
+	%Int32
+};
+
+%Event = type {
+};
+
+declare external %Int32 @init(%Word32 %flags)
+declare external void @shutdown()
+declare external %ConstCharStr* @getError()
+declare external void @delay(%Nat32 %ms)
+declare external i8* @createWindow(%ConstCharStr* %title, %Int32 %x, %Int32 %y, %Int32 %w, %Int32 %h, %Word32 %flags)
+declare external void @destroyWindow(i8* %window)
+declare external i8* @createRenderer(i8* %window, %Int32 %index, %Word32 %flags)
+declare external void @destroyRenderer(i8* %renderer)
+declare external %Int32 @renderClear(i8* %renderer)
+declare external %Int32 @renderCopy(i8* %renderer, i8* %texture, %Rect* %srcrect, %Rect* %dstrect)
+declare external void @renderPresent(i8* %renderer)
+declare external i8* @createTexture(i8* %renderer, %Nat32 %format, %Int32 %access, %Int32 %w, %Int32 %h)
+declare external void @destroyTexture(i8* %texture)
+declare external %Int32 @updateTexture(i8* %texture, %Rect* %rect, i8* %pixels, %Int32 %pitch)
+declare external %Int32 @pollEvent(i8* %event)
+
+; end from import "sdl"
+
+; from import "display"
+%display_MemMap = type i8* (%Nat32, %Nat32)*;
+declare void @display_init(%display_MemMap %mm)
+declare %Bool @display_isOn()
+declare %Word32 @display_read32(%Nat32 %adr)
+declare void @display_write32(%Nat32 %adr, %Word32 %value)
+declare %Bool @display_poll()
+declare void @display_waitClose()
+declare void @display_shutdown()
+
+; end from import "display"
+
 ; from import "mmio"
 declare void @mmio_write8(%Nat32 %adr, %Word8 %value)
 declare void @mmio_write16(%Nat32 %adr, %Word16 %value)
@@ -164,6 +214,7 @@ declare %Word32 @mmio_read32(%Nat32 %adr)
 ; from import "bus"
 declare %Word32 @bus_read(%Nat32 %adr, %Nat8 %size)
 declare void @bus_write(%Nat32 %adr, %Word32 %value, %Nat8 %size)
+declare i8* @bus_ramPtr(%Nat32 %adr, %Nat32 %size)
 declare void @bus_memoryViolation(%Char8 %rw, %Nat32 %adr)
 declare %Nat32 @bus_load_rom(%Str8* %filename)
 declare void @bus_show_ram()
@@ -301,10 +352,12 @@ declare void @hart_show_regs(%hart_Hart* %hart)
 @.str1 = private constant [11 x i8] [i8 82, i8 73, i8 83, i8 67, i8 45, i8 86, i8 32, i8 86, i8 77, i8 10, i8 0]
 @.str2 = private constant [23 x i8] [i8 117, i8 115, i8 97, i8 103, i8 101, i8 58, i8 32, i8 37, i8 115, i8 32, i8 60, i8 105, i8 109, i8 97, i8 103, i8 101, i8 46, i8 98, i8 105, i8 110, i8 62, i8 10, i8 0]
 @.str3 = private constant [82 x i8] [i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 62, i8 10, i8 0]
-@.str4 = private constant [82 x i8] [i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 10, i8 0]
-@.str5 = private constant [13 x i8] [i8 109, i8 99, i8 121, i8 99, i8 108, i8 101, i8 32, i8 61, i8 32, i8 37, i8 117, i8 10, i8 0]
-@.str6 = private constant [13 x i8] [i8 10, i8 67, i8 111, i8 114, i8 101, i8 32, i8 100, i8 117, i8 109, i8 112, i8 58, i8 10, i8 0]
-@.str7 = private constant [2 x i8] [i8 10, i8 0]
+@.str4 = private constant [24 x i8] [i8 10, i8 100, i8 105, i8 115, i8 112, i8 108, i8 97, i8 121, i8 32, i8 119, i8 105, i8 110, i8 100, i8 111, i8 119, i8 32, i8 99, i8 108, i8 111, i8 115, i8 101, i8 100, i8 10, i8 0]
+@.str5 = private constant [35 x i8] [i8 10, i8 99, i8 108, i8 111, i8 115, i8 101, i8 32, i8 116, i8 104, i8 101, i8 32, i8 100, i8 105, i8 115, i8 112, i8 108, i8 97, i8 121, i8 32, i8 119, i8 105, i8 110, i8 100, i8 111, i8 119, i8 32, i8 116, i8 111, i8 32, i8 101, i8 120, i8 105, i8 116, i8 10, i8 0]
+@.str6 = private constant [82 x i8] [i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 60, i8 10, i8 0]
+@.str7 = private constant [13 x i8] [i8 109, i8 99, i8 121, i8 99, i8 108, i8 101, i8 32, i8 61, i8 32, i8 37, i8 117, i8 10, i8 0]
+@.str8 = private constant [13 x i8] [i8 10, i8 67, i8 111, i8 114, i8 101, i8 32, i8 100, i8 117, i8 109, i8 112, i8 58, i8 10, i8 0]
+@.str9 = private constant [2 x i8] [i8 10, i8 0]
 ; -- endstrings --
 @hart = internal global %hart_Hart zeroinitializer
 define %Int @main(%Int %argc, [0 x %Str8*]* %argv) {
@@ -334,43 +387,75 @@ endif_1:
 	%12 = insertvalue %hart_BusInterface %11, void (%Nat32, %Word32, %Nat8)* @bus_write, 1
 	store %hart_BusInterface %12, %hart_BusInterface* %10
 	call void @hart_init(%hart_Hart* @hart, %Nat32 0, %hart_BusInterface* %10)
+	call void @display_init(i8* (%Nat32, %Nat32)* @bus_ramPtr)
 	%13 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str3 to [0 x i8]*))
 	%14 = alloca %Nat32, align 4
 	store %Nat32 0, %Nat32* %14
+	%15 = alloca %Nat32, align 4
+	store %Nat32 0, %Nat32* %15
 ; while_1
 	br label %again_1
 again_1:
 	br %Bool 1 , label %body_1, label %break_1
 body_1:
 ; if_2
-	%15 = call %Bool @hart_cycle(%hart_Hart* @hart)
-	%16 = xor %Bool %15, 1
-	br %Bool %16 , label %then_2, label %endif_2
+	%16 = call %Bool @hart_cycle(%hart_Hart* @hart)
+	%17 = xor %Bool %16, 1
+	br %Bool %17 , label %then_2, label %endif_2
 then_2:
 	br label %break_1
 	br label %endif_2
 endif_2:
-	%18 = load %Nat32, %Nat32* %14
-	%19 = add %Nat32 %18, 1
-	store %Nat32 %19, %Nat32* %14
+	%19 = load %Nat32, %Nat32* %14
+	%20 = add %Nat32 %19, 1
+	store %Nat32 %20, %Nat32* %14
 ; if_3
-	%20 = load %Nat32, %Nat32* %14
-	%21 = icmp eq %Nat32 %20, 1000
-	br %Bool %21 , label %then_3, label %endif_3
+	%21 = load %Nat32, %Nat32* %14
+	%22 = icmp eq %Nat32 %21, 1000
+	br %Bool %22 , label %then_3, label %endif_3
 then_3:
 	store %Nat32 0, %Nat32* %14
-	%22 = zext i8 1 to %Word32
-	call void @hart_interrupt(%hart_Hart* @hart, %Word32 %22)
+	%23 = zext i8 1 to %Word32
+	call void @hart_interrupt(%hart_Hart* @hart, %Word32 %23)
 	br label %endif_3
 endif_3:
+	%24 = load %Nat32, %Nat32* %15
+	%25 = add %Nat32 %24, 1
+	store %Nat32 %25, %Nat32* %15
+; if_4
+	%26 = load %Nat32, %Nat32* %15
+	%27 = icmp eq %Nat32 %26, 100000
+	br %Bool %27 , label %then_4, label %endif_4
+then_4:
+	store %Nat32 0, %Nat32* %15
+; if_5
+	%28 = call %Bool @display_poll()
+	%29 = xor %Bool %28, 1
+	br %Bool %29 , label %then_5, label %endif_5
+then_5:
+	%30 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([24 x i8]* @.str4 to [0 x i8]*))
+	br label %break_1
+	br label %endif_5
+endif_5:
+	br label %endif_4
+endif_4:
 	br label %again_1
 break_1:
-	%23 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str4 to [0 x i8]*))
-	%24 = call %Word32 @hart_getCsr(%hart_Hart* @hart, %Nat16 2816)
-	%25 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str5 to [0 x i8]*), %Word32 %24)
-	%26 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str6 to [0 x i8]*))
+; if_6
+	%32 = call %Bool @display_isOn()
+	br %Bool %32 , label %then_6, label %endif_6
+then_6:
+	%33 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([35 x i8]* @.str5 to [0 x i8]*))
+	call void @display_waitClose()
+	br label %endif_6
+endif_6:
+	call void @display_shutdown()
+	%34 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str6 to [0 x i8]*))
+	%35 = call %Word32 @hart_getCsr(%hart_Hart* @hart, %Nat16 2816)
+	%36 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str7 to [0 x i8]*), %Word32 %35)
+	%37 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str8 to [0 x i8]*))
 	call void @hart_show_regs(%hart_Hart* @hart)
-	%27 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str7 to [0 x i8]*))
+	%38 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str9 to [0 x i8]*))
 	call void @bus_show_ram()
 	ret %Int 0
 }

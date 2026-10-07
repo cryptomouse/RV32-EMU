@@ -11,7 +11,9 @@ LLVMPREFIX = $(OUTDIR)/llvm/
 
 CM_OPTS = -funsafe
 
-C_OPTIONS = -I$(CPREFIX) -I$(CPREFIX)/hart
+SDL_FLAGS = -I/opt/homebrew/include -L/opt/homebrew/lib -lSDL2
+
+C_OPTIONS = -O2 -I$(CPREFIX) -I$(CPREFIX)/hart
 
 # lightfood/bits32 из стандартной библиотеки Modest (нужен MODEST_DIR)
 BITS32 = $(MODEST_DIR)/lib/lightfood/bits32.modest
@@ -27,14 +29,18 @@ LLVM:
 	modest -o $(LLVMPREFIX)/hart/decode $(CM_OPTS) -mbackend=llvm $(INDIR)/hart/decode.m
 	modest -o $(LLVMPREFIX)/bus $(CM_OPTS) -mbackend=llvm $(INDIR)/bus.m
 	modest -o $(LLVMPREFIX)/mmio $(CM_OPTS) -mbackend=llvm $(INDIR)/mmio.m
+	# display uses SDL2 via @extern("C", ...) names which only the C backend supports
+	modest -o $(LLVMPREFIX)/display $(CM_OPTS) -mbackend=c11 $(INDIR)/display.m
 	modest -o $(LLVMPREFIX)/bits32 $(CM_OPTS) -mbackend=llvm $(BITS32)
-	clang \
+	clang -O2 \
 		$(LLVMPREFIX)/main.ll \
 		$(LLVMPREFIX)/hart/hart.ll \
 		$(LLVMPREFIX)/hart/decode.ll \
 		$(LLVMPREFIX)/bus.ll \
 		$(LLVMPREFIX)/mmio.ll \
-		$(LLVMPREFIX)/bits32.ll
+		$(LLVMPREFIX)/display.c \
+		$(LLVMPREFIX)/bits32.ll \
+		$(SDL_FLAGS)
 
 
 CM:
@@ -44,6 +50,7 @@ CM:
 	modest -o $(CMPREFIX)/hart/csr $(CM_OPTS) -mbackend=modest $(INDIR)/hart/csr.m
 	modest -o $(CMPREFIX)/bus $(CM_OPTS) -mbackend=modest $(INDIR)/bus.m
 	modest -o $(CMPREFIX)/mmio $(CM_OPTS) -mbackend=modest $(INDIR)/mmio.m
+	modest -o $(CMPREFIX)/display $(CM_OPTS) -mbackend=modest $(INDIR)/display.m
 	modest -o $(CMPREFIX)/bits32 $(CM_OPTS) -mbackend=modest $(BITS32)
 
 
@@ -54,13 +61,15 @@ C:
 	modest -o $(CPREFIX)/hart/decode $(CM_OPTS) -mbackend=c11 $(CM_OPTS) $(INDIR)/hart/decode.m
 	modest -o $(CPREFIX)/bus $(CM_OPTS) $(CM_OPTS) -mbackend=c11 $(INDIR)/bus.m
 	modest -o $(CPREFIX)/mmio $(CM_OPTS) $(CM_OPTS) -mbackend=c11 $(INDIR)/mmio.m
+	modest -o $(CPREFIX)/display $(CM_OPTS) -mbackend=c11 $(INDIR)/display.m
 	modest -o $(CPREFIX)/bits32 $(CM_OPTS) -mbackend=c11 $(BITS32)
-	CC $(C_OPTIONS) \
+	CC $(C_OPTIONS) $(SDL_FLAGS) \
 		$(CPREFIX)/main.c \
 		$(CPREFIX)/hart/hart.c \
 		$(CPREFIX)/hart/decode.c \
 		$(CPREFIX)/bus.c \
 		$(CPREFIX)/mmio.c \
+		$(CPREFIX)/display.c \
 		$(CPREFIX)/bits32.c
 
 

@@ -135,6 +135,56 @@ declare void @perror(%ConstCharStr* %str)
 ; from import "builtin"
 
 ; end from import "builtin"
+
+; from import "sdl"
+%Window = type {
+};
+
+%Renderer = type {
+};
+
+%Texture = type {
+};
+
+%Rect = type {
+	%Int32,
+	%Int32,
+	%Int32,
+	%Int32
+};
+
+%Event = type {
+};
+
+declare external %Int32 @init(%Word32 %flags)
+declare external void @shutdown()
+declare external %ConstCharStr* @getError()
+declare external void @delay(%Nat32 %ms)
+declare external i8* @createWindow(%ConstCharStr* %title, %Int32 %x, %Int32 %y, %Int32 %w, %Int32 %h, %Word32 %flags)
+declare external void @destroyWindow(i8* %window)
+declare external i8* @createRenderer(i8* %window, %Int32 %index, %Word32 %flags)
+declare external void @destroyRenderer(i8* %renderer)
+declare external %Int32 @renderClear(i8* %renderer)
+declare external %Int32 @renderCopy(i8* %renderer, i8* %texture, %Rect* %srcrect, %Rect* %dstrect)
+declare external void @renderPresent(i8* %renderer)
+declare external i8* @createTexture(i8* %renderer, %Nat32 %format, %Int32 %access, %Int32 %w, %Int32 %h)
+declare external void @destroyTexture(i8* %texture)
+declare external %Int32 @updateTexture(i8* %texture, %Rect* %rect, i8* %pixels, %Int32 %pitch)
+declare external %Int32 @pollEvent(i8* %event)
+
+; end from import "sdl"
+
+; from import "display"
+%display_MemMap = type i8* (%Nat32, %Nat32)*;
+declare void @display_init(%display_MemMap %mm)
+declare %Bool @display_isOn()
+declare %Word32 @display_read32(%Nat32 %adr)
+declare void @display_write32(%Nat32 %adr, %Word32 %value)
+declare %Bool @display_poll()
+declare void @display_waitClose()
+declare void @display_shutdown()
+
+; end from import "display"
 ; -- end print imports 'mmio' --
 ; -- strings --
 @.str1 = private constant [3 x i8] [i8 37, i8 100, i8 0]
@@ -204,10 +254,21 @@ then_3:
 else_3:
 ; if_4
 	%14 = icmp eq %Nat32 %adr, 44
-	br %Bool %14 , label %then_4, label %endif_4
+	br %Bool %14 , label %then_4, label %else_4
 then_4:
 	%15 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([3 x i8]* @.str4 to [0 x i8]*), %Word32 %value)
 	ret void
+	br label %endif_4
+else_4:
+; if_5
+	%17 = call %Bool @isDisplayAdr(%Nat32 %adr)
+	br %Bool %17 , label %then_5, label %endif_5
+then_5:
+	%18 = sub %Nat32 %adr, 4096
+	call void @display_write32(%Nat32 %18, %Word32 %value)
+	ret void
+	br label %endif_5
+endif_5:
 	br label %endif_4
 endif_4:
 	br label %endif_3
@@ -232,8 +293,24 @@ define %Word16 @mmio_read16(%Nat32 %adr) {
 }
 
 define %Word32 @mmio_read32(%Nat32 %adr) {
-	%1 = zext i8 0 to %Word32
-	ret %Word32 %1
+; if_0
+	%1 = call %Bool @isDisplayAdr(%Nat32 %adr)
+	br %Bool %1 , label %then_0, label %endif_0
+then_0:
+	%2 = sub %Nat32 %adr, 4096
+	%3 = call %Word32 @display_read32(%Nat32 %2)
+	ret %Word32 %3
+	br label %endif_0
+endif_0:
+	%5 = zext i8 0 to %Word32
+	ret %Word32 %5
+}
+
+define internal %Bool @isDisplayAdr(%Nat32 %adr) alwaysinline {
+	%1 = icmp uge %Nat32 %adr, 4096
+	%2 = icmp ult %Nat32 %adr, 8192
+	%3 = and %Bool %1, %2
+	ret %Bool %3
 }
 
 
