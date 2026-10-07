@@ -66,10 +66,10 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 	}
 
 	// The program has finished but its picture stays on the screen
-	if display.isOn() {
-		printf("\nclose the display window to exit\n")
-		display.waitClose()
-	}
+	// if display.isOn() {
+	// 	printf("\nclose the display window to exit\n")
+	// 	display.waitClose()
+	// }
 	display.shutdown()
 
 	printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
