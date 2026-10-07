@@ -28,3 +28,9 @@ public const displayCrEN = Word32 0x1
 public const displaySrON = Word32 0x1
 public const displaySrERR = Word32 0x2
 
+
+@inline
+public func reg (adr: Word32) -> *@volatile Word32 {
+	return unsafe(*@volatile Word32 adr)
+}
+

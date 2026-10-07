@@ -645,11 +645,11 @@ func execSystem (hart: *Hart, instr: Word32, nexpc: Nat32) -> Nat32 {
 		let mepc = getCsr(hart, csr.mepcRegno)
 		let mcause = getCsr(hart, csr.mcauseRegno)
 		let mtval = getCsr(hart, csr.mtvalRegno)
-		printf(
+		/*printf(
 			"MRET: hart #%d, mepc=%08X, mcause=%08X, mtval=%08X\n"
 			getCsr(hart, csr.mhartidRegno)
 			mepc, mcause, mtval
-		)
+		)*/
 		return Nat32 mepc
 
 	} else if instr == instrEBREAK {

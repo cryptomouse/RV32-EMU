@@ -28,5 +28,10 @@
 #define VM_SYS_DISPLAY_CR_EN 0x1
 #define VM_SYS_DISPLAY_SR_ON 0x1
 #define VM_SYS_DISPLAY_SR_ERR 0x2
+
+__attribute__((always_inline))
+inline volatile uint32_t *vm_sys_reg(uint32_t adr) {
+	return (volatile uint32_t *)adr;
+}
 #endif
 

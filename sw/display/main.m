@@ -6,14 +6,15 @@ include "libc/stdio"
 include "../sys/vm_sys"
 
 
-const width = Nat32 320
-const height = Nat32 240
-const frames = Nat32 256
+const width = Nat32 640
+const height = Nat32 480
+const frames = Nat32 1024
 
 // framebuffer in RAM, ARGB8888: [row][column]
-var fb: [height][width]Word32
+var framebuffer: [height][width]Word32
 
 
+@inline
 func reg (adr: Word32) -> *@volatile Word32 {
 	return unsafe(*@volatile Word32 adr)
 }
@@ -27,7 +28,7 @@ func draw (offset: Nat32) -> Unit {
 			let r = Word32 ((x + offset) % 256)
 			let g = Word32 ((y + offset) % 256)
 			let b = Word32 128
-			fb[y][x] = 0xFF000000 | (r << 16) | (g << 8) | b
+			framebuffer[y][x] = 0xFF000000 | (r << 16) | (g << 8) | b
 			++x
 		}
 		++y
@@ -40,7 +41,7 @@ func main () -> Int {
 
 	*reg(displayWidth) = Word32 width
 	*reg(displayHeight) = Word32 height
-	*reg(displayFB) = Word32 unsafe(Nat32 &fb)
+	*reg(displayFB) = Word32 unsafe(Nat32 &framebuffer)
 	*reg(displayCR) = displayCrEN
 
 	if (*reg(displaySR) & displaySrON) == 0 {

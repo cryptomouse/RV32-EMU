@@ -10,8 +10,8 @@
 #define SR_ERR 0x2
 #define MAX_WIDTH 4096
 #define MAX_HEIGHT 4096
-#define PREFERRED_WINDOW_WIDTH 1280
-#define PREFERRED_WINDOW_HEIGHT 960
+#define PREFERRED_WINDOW_WIDTH 640
+#define PREFERRED_WINDOW_HEIGHT 480
 static display_MemMap memMap;
 static uint32_t cr;
 static uint32_t sr;

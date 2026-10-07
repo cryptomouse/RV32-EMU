@@ -38,8 +38,8 @@ const maxWidth = Nat32 4096
 const maxHeight = Nat32 4096
 
 // the window is scaled up (by an integer factor) to fit this size
-const preferredWindowWidth = Nat32 1280
-const preferredWindowHeight = Nat32 960
+const preferredWindowWidth = Nat32 640
+const preferredWindowHeight = Nat32 480
 
 
 // Returns host pointer to guest memory [adr, adr + size) or nil

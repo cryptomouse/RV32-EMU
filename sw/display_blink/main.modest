@@ -1,0 +1,79 @@
+// display - display controller demo: animated gradient
+
+pragma unsafe
+
+include "libc/stdio"
+include "../sys/vm_sys"
+
+import "display"
+
+
+const frameWidth = Nat32 640
+const frameHeight = Nat32 480
+
+
+// framebuffer in RAM, ARGB8888: [row][column]
+var framebuffer: [frameHeight][frameWidth]Word32
+
+var counter: @volatile Nat32
+
+
+// see csr.S
+@extern("C", "irq_enable")
+func irqEnable (mieMask: Word32) -> Unit
+
+// timer interrupt: emulator sets mip bit #1 (see src/hart/hart.m intSysTimer)
+const mieTimer = Word32 1 << 1
+
+
+func main () -> Int {
+	printf("display demo: %dx%d\n", frameWidth, frameHeight)
+
+	init()
+
+	var state: Bool = true
+	while true {
+		printf("frame %d\n", *reg(displayFrame))
+		displaySetDot(state)
+		state = not state
+		while counter < 100000 {
+			// wait for 100000 interrupts (1 second)
+		}
+		counter = 0
+	}
+
+	printf("frames shown: %d\n", *reg(displayFrame))
+
+	return 0
+}
+
+
+func init () -> Unit {
+	if not display.init(&framebuffer, frameWidth, frameHeight) {
+		printf("display demo: cannot setup display\n")
+	}
+
+	irqEnable(mieTimer)
+}
+
+
+func displaySetDot (state: Bool) -> Unit {
+	let x = frameWidth / 2
+	let y = frameHeight / 2
+
+	if state {
+		framebuffer[y][x] = 0xFFFFFFFF
+	} else {
+		framebuffer[y][x] = 0xFF000000
+	}
+
+	display.update()
+}
+
+
+// called from _trap (see sys/vect.S)
+@alias("__isr")
+public func isr () -> Unit {
+	++counter
+}
+

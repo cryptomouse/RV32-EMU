@@ -405,7 +405,6 @@ static uint32_t execSystem(struct hart_hart *hart, uint32_t instr, uint32_t nexp
 		const uint32_t mepc = hart_getCsr(hart, CSR_MEPC_REGNO);
 		const uint32_t mcause = hart_getCsr(hart, CSR_MCAUSE_REGNO);
 		const uint32_t mtval = hart_getCsr(hart, CSR_MTVAL_REGNO);
-		printf("MRET: hart #%d, mepc=%08X, mcause=%08X, mtval=%08X\n", hart_getCsr(hart, CSR_MHARTID_REGNO), mepc, mcause, mtval);
 		return mepc;
 	} else if (instr == INSTR_EBREAK) {
 		trace(hart->pc, "ebreak\n");

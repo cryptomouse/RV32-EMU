@@ -4,12 +4,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "vm_sys.h"
-#define WIDTH 320
-#define HEIGHT 240
-#define FRAMES 256
-static uint32_t fb[HEIGHT][WIDTH];
+#define WIDTH 640
+#define HEIGHT 480
+#define FRAMES 1024
+static uint32_t framebuffer[HEIGHT][WIDTH];
 
-static volatile uint32_t *reg(uint32_t adr) {
+__attribute__((always_inline))
+static inline volatile uint32_t *reg(uint32_t adr) {
 	return (volatile uint32_t *)adr;
 }
 
@@ -22,7 +23,7 @@ static void draw(uint32_t offset) {
 			const uint32_t r = ((x + offset) % 256);
 			const uint32_t g = ((y + offset) % 256);
 			const uint32_t b = 128;
-			fb[y][x] = 0xFF000000UL | (r << 16) | (g << 8) | b;
+			framebuffer[y][x] = 0xFF000000UL | (r << 16) | (g << 8) | b;
 			++x;
 		}
 		++y;
@@ -34,7 +35,7 @@ int main(void) {
 	printf("display demo: %dx%d, %d frames\n", WIDTH, HEIGHT, FRAMES);
 	*reg(VM_SYS_DISPLAY_WIDTH) = WIDTH;
 	*reg(VM_SYS_DISPLAY_HEIGHT) = HEIGHT;
-	*reg(VM_SYS_DISPLAY_FB) = (uint32_t)fb;
+	*reg(VM_SYS_DISPLAY_FB) = (uint32_t)framebuffer;
 	*reg(VM_SYS_DISPLAY_CR) = VM_SYS_DISPLAY_CR_EN;
 	if ((*reg(VM_SYS_DISPLAY_SR) & VM_SYS_DISPLAY_SR_ON) == 0x0) {
 		printf("display: cannot enable\n");

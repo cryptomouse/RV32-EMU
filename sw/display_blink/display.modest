@@ -1,0 +1,22 @@
+
+include "../sys/vm_sys"
+
+
+public func init (framebuffer: *[][]Word32, width: Nat32, height: Nat32) -> Bool {
+	*reg(displayWidth) = Word32 width
+	*reg(displayHeight) = Word32 height
+	*reg(displayFB) = Word32 unsafe(Nat32 framebuffer)
+	*reg(displayCR) = displayCrEN
+
+	if (*reg(displaySR) & displaySrON) == 0 {
+		//printf("display: cannot enable\n")
+		return false
+	}
+	return true
+}
+
+
+public func update () -> Unit {
+	*reg(displayRefresh) = 1
+}
+
