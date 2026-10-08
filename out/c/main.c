@@ -47,10 +47,6 @@ int main(int argc, char **argv) {
 			display_poll();
 		}
 	}
-	if (display_isOn()) {
-		printf("\nclose the display window to exit\n");
-		display_waitClose();
-	}
 	display_shutdown();
 	printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 	printf("mcycle = %u\n", hart_getCsr(&hart, CSR_MCYCLE_REGNO));

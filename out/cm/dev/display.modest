@@ -10,9 +10,11 @@ public const regWidth = Nat32 0x0C
 public const regHeight = Nat32 0x10
 public const regFB = Nat32 0x14
 public const regFrame = Nat32 0x18
+public const regCMD = Nat32 0x1C
 
 const crEN = Word32 0x1
-const crREFRESH = Word32 0x2
+
+const cmdREFRESH = Word32 0x1
 
 const srON = Word32 0x1
 const srERR = Word32 0x2
@@ -45,7 +47,7 @@ var er: Word32
 var width: Nat32
 var height: Nat32
 var fb: Nat32
-var frame: Nat32
+var framecnt: Nat32
 
 // geometry the window was created with
 var activeWidth: Nat32
@@ -84,7 +86,7 @@ public func read32 (adr: Nat32) -> Word32 {
 	} else if adr == regFB {
 		return Word32 fb
 	} else if adr == regFrame {
-		return Word32 frame
+		return Word32 framecnt
 	}
 	return 0
 }
@@ -102,7 +104,8 @@ public func write32 (adr: Nat32, value: Word32) -> Unit {
 		} else if not enable and enabled {
 			closeWindow()
 		}
-		if (value & crREFRESH) != 0 {
+	} else if adr == regCMD {
+		if (value & cmdREFRESH) != 0 {
 			refresh()
 		}
 	} else if adr == regER {
@@ -174,7 +177,7 @@ func openWindow () -> Bool {
 
 	activeWidth = width
 	activeHeight = height
-	frame = 0
+	framecnt = 0
 	sr = srON
 	sdl.renderClear(renderer)
 	sdl.renderPresent(renderer)
@@ -224,7 +227,7 @@ func refresh () -> Unit {
 	sdl.renderCopy(renderer, texture, nil, nil)
 	sdl.renderPresent(renderer)
 
-	++frame
+	++framecnt
 }
 
 

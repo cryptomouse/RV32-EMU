@@ -1451,90 +1451,89 @@ define internal void @execL(%hart_Hart* %hart, %Word32 %instr) {
 	%8 = zext %Nat8 %5 to %Nat32
 	%9 = getelementptr [32 x %Word32], [32 x %Word32]* %7, %Int32 0, %Nat32 %8
 	%10 = load %Word32, %Word32* %9
-	%11 = bitcast %Word32 %10 to %Int32
-	%12 = add %Int32 %11, %3
-	%13 = bitcast %Int32 %12 to %Word32
-	%14 = bitcast %Word32 %13 to %Nat32
-	%15 = alloca %Word32, align 4
-	store %Word32 0, %Word32* %15
+	%11 = bitcast %Word32 %10 to %Nat32
+	%12 = bitcast %Int32 %3 to %Nat32
+	%13 = add %Nat32 %11, %12
+	%14 = alloca %Word32, align 4
+	store %Word32 0, %Word32* %14
 ; if_0
-	%16 = bitcast i8 0 to %Word8
-	%17 = icmp eq %Word8 %1, %16
-	br %Bool %17 , label %then_0, label %else_0
+	%15 = bitcast i8 0 to %Word8
+	%16 = icmp eq %Word8 %1, %15
+	br %Bool %16 , label %then_0, label %else_0
 then_0:
-	%18 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
-	%19 = load %Nat32, %Nat32* %18
-	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %19, %Str8* bitcast ([17 x i8]* @.str41 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
-	%20 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
-	%21 = load %hart_BusInterface*, %hart_BusInterface** %20
-	%22 = getelementptr %hart_BusInterface, %hart_BusInterface* %21, %Int32 0, %Int32 0
-	%23 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %22
-	%24 = call %Word32 %23(%Nat32 %14, %Nat8 1)
-	store %Word32 %24, %Word32* %15
+	%17 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
+	%18 = load %Nat32, %Nat32* %17
+	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %18, %Str8* bitcast ([17 x i8]* @.str41 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
+	%19 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
+	%20 = load %hart_BusInterface*, %hart_BusInterface** %19
+	%21 = getelementptr %hart_BusInterface, %hart_BusInterface* %20, %Int32 0, %Int32 0
+	%22 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %21
+	%23 = call %Word32 %22(%Nat32 %13, %Nat8 1)
+	store %Word32 %23, %Word32* %14
 	br label %endif_0
 else_0:
 ; if_1
-	%25 = bitcast i8 1 to %Word8
-	%26 = icmp eq %Word8 %1, %25
-	br %Bool %26 , label %then_1, label %else_1
+	%24 = bitcast i8 1 to %Word8
+	%25 = icmp eq %Word8 %1, %24
+	br %Bool %25 , label %then_1, label %else_1
 then_1:
-	%27 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
-	%28 = load %Nat32, %Nat32* %27
-	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %28, %Str8* bitcast ([17 x i8]* @.str42 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
-	%29 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
-	%30 = load %hart_BusInterface*, %hart_BusInterface** %29
-	%31 = getelementptr %hart_BusInterface, %hart_BusInterface* %30, %Int32 0, %Int32 0
-	%32 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %31
-	%33 = call %Word32 %32(%Nat32 %14, %Nat8 2)
-	store %Word32 %33, %Word32* %15
+	%26 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
+	%27 = load %Nat32, %Nat32* %26
+	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %27, %Str8* bitcast ([17 x i8]* @.str42 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
+	%28 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
+	%29 = load %hart_BusInterface*, %hart_BusInterface** %28
+	%30 = getelementptr %hart_BusInterface, %hart_BusInterface* %29, %Int32 0, %Int32 0
+	%31 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %30
+	%32 = call %Word32 %31(%Nat32 %13, %Nat8 2)
+	store %Word32 %32, %Word32* %14
 	br label %endif_1
 else_1:
 ; if_2
-	%34 = bitcast i8 2 to %Word8
-	%35 = icmp eq %Word8 %1, %34
-	br %Bool %35 , label %then_2, label %else_2
+	%33 = bitcast i8 2 to %Word8
+	%34 = icmp eq %Word8 %1, %33
+	br %Bool %34 , label %then_2, label %else_2
 then_2:
-	%36 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
-	%37 = load %Nat32, %Nat32* %36
-	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %37, %Str8* bitcast ([17 x i8]* @.str43 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
-	%38 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
-	%39 = load %hart_BusInterface*, %hart_BusInterface** %38
-	%40 = getelementptr %hart_BusInterface, %hart_BusInterface* %39, %Int32 0, %Int32 0
-	%41 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %40
-	%42 = call %Word32 %41(%Nat32 %14, %Nat8 4)
-	store %Word32 %42, %Word32* %15
+	%35 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
+	%36 = load %Nat32, %Nat32* %35
+	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %36, %Str8* bitcast ([17 x i8]* @.str43 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
+	%37 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
+	%38 = load %hart_BusInterface*, %hart_BusInterface** %37
+	%39 = getelementptr %hart_BusInterface, %hart_BusInterface* %38, %Int32 0, %Int32 0
+	%40 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %39
+	%41 = call %Word32 %40(%Nat32 %13, %Nat8 4)
+	store %Word32 %41, %Word32* %14
 	br label %endif_2
 else_2:
 ; if_3
-	%43 = bitcast i8 4 to %Word8
-	%44 = icmp eq %Word8 %1, %43
-	br %Bool %44 , label %then_3, label %else_3
+	%42 = bitcast i8 4 to %Word8
+	%43 = icmp eq %Word8 %1, %42
+	br %Bool %43 , label %then_3, label %else_3
 then_3:
-	%45 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
-	%46 = load %Nat32, %Nat32* %45
-	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %46, %Str8* bitcast ([18 x i8]* @.str44 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
-	%47 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
-	%48 = load %hart_BusInterface*, %hart_BusInterface** %47
-	%49 = getelementptr %hart_BusInterface, %hart_BusInterface* %48, %Int32 0, %Int32 0
-	%50 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %49
-	%51 = call %Word32 %50(%Nat32 %14, %Nat8 1)
-	store %Word32 %51, %Word32* %15
+	%44 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
+	%45 = load %Nat32, %Nat32* %44
+	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %45, %Str8* bitcast ([18 x i8]* @.str44 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
+	%46 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
+	%47 = load %hart_BusInterface*, %hart_BusInterface** %46
+	%48 = getelementptr %hart_BusInterface, %hart_BusInterface* %47, %Int32 0, %Int32 0
+	%49 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %48
+	%50 = call %Word32 %49(%Nat32 %13, %Nat8 1)
+	store %Word32 %50, %Word32* %14
 	br label %endif_3
 else_3:
 ; if_4
-	%52 = bitcast i8 5 to %Word8
-	%53 = icmp eq %Word8 %1, %52
-	br %Bool %53 , label %then_4, label %endif_4
+	%51 = bitcast i8 5 to %Word8
+	%52 = icmp eq %Word8 %1, %51
+	br %Bool %52 , label %then_4, label %endif_4
 then_4:
-	%54 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
-	%55 = load %Nat32, %Nat32* %54
-	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %55, %Str8* bitcast ([18 x i8]* @.str45 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
-	%56 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
-	%57 = load %hart_BusInterface*, %hart_BusInterface** %56
-	%58 = getelementptr %hart_BusInterface, %hart_BusInterface* %57, %Int32 0, %Int32 0
-	%59 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %58
-	%60 = call %Word32 %59(%Nat32 %14, %Nat8 2)
-	store %Word32 %60, %Word32* %15
+	%53 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
+	%54 = load %Nat32, %Nat32* %53
+	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %54, %Str8* bitcast ([18 x i8]* @.str45 to [0 x i8]*), %Nat8 %4, %Int32 %3, %Nat8 %5)
+	%55 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
+	%56 = load %hart_BusInterface*, %hart_BusInterface** %55
+	%57 = getelementptr %hart_BusInterface, %hart_BusInterface* %56, %Int32 0, %Int32 0
+	%58 = load %Word32 (%Nat32, %Nat8)*, %Word32 (%Nat32, %Nat8)** %57
+	%59 = call %Word32 %58(%Nat32 %13, %Nat8 2)
+	store %Word32 %59, %Word32* %14
 	br label %endif_4
 endif_4:
 	br label %endif_3
@@ -1545,11 +1544,11 @@ endif_2:
 endif_1:
 	br label %endif_0
 endif_0:
-	%61 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 0
-	%62 = zext %Nat8 %4 to %Nat32
-	%63 = getelementptr [32 x %Word32], [32 x %Word32]* %61, %Int32 0, %Nat32 %62
-	%64 = load %Word32, %Word32* %15
-	store %Word32 %64, %Word32* %63
+	%60 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 0
+	%61 = zext %Nat8 %4 to %Nat32
+	%62 = getelementptr [32 x %Word32], [32 x %Word32]* %60, %Int32 0, %Nat32 %61
+	%63 = load %Word32, %Word32* %14
+	store %Word32 %63, %Word32* %62
 	ret void
 }
 
@@ -1570,57 +1569,56 @@ define internal void @execS(%hart_Hart* %hart, %Word32 %instr) {
 	%14 = zext %Nat8 %4 to %Nat32
 	%15 = getelementptr [32 x %Word32], [32 x %Word32]* %13, %Int32 0, %Nat32 %14
 	%16 = load %Word32, %Word32* %15
-	%17 = bitcast %Word32 %16 to %Int32
-	%18 = add %Int32 %17, %12
-	%19 = bitcast %Int32 %18 to %Word32
-	%20 = bitcast %Word32 %19 to %Nat32
-	%21 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 0
-	%22 = zext %Nat8 %5 to %Nat32
-	%23 = getelementptr [32 x %Word32], [32 x %Word32]* %21, %Int32 0, %Nat32 %22
-	%24 = load %Word32, %Word32* %23
+	%17 = bitcast %Word32 %16 to %Nat32
+	%18 = bitcast %Int32 %12 to %Nat32
+	%19 = add %Nat32 %17, %18
+	%20 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 0
+	%21 = zext %Nat8 %5 to %Nat32
+	%22 = getelementptr [32 x %Word32], [32 x %Word32]* %20, %Int32 0, %Nat32 %21
+	%23 = load %Word32, %Word32* %22
 ; if_0
-	%25 = bitcast i8 0 to %Word8
-	%26 = icmp eq %Word8 %1, %25
-	br %Bool %26 , label %then_0, label %else_0
+	%24 = bitcast i8 0 to %Word8
+	%25 = icmp eq %Word8 %1, %24
+	br %Bool %25 , label %then_0, label %else_0
 then_0:
-	%27 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
-	%28 = load %Nat32, %Nat32* %27
-	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %28, %Str8* bitcast ([17 x i8]* @.str46 to [0 x i8]*), %Nat8 %5, %Int32 %12, %Nat8 %4)
-	%29 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
-	%30 = load %hart_BusInterface*, %hart_BusInterface** %29
-	%31 = getelementptr %hart_BusInterface, %hart_BusInterface* %30, %Int32 0, %Int32 1
-	%32 = load void (%Nat32, %Word32, %Nat8)*, void (%Nat32, %Word32, %Nat8)** %31
-	call void %32(%Nat32 %20, %Word32 %24, %Nat8 1)
+	%26 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
+	%27 = load %Nat32, %Nat32* %26
+	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %27, %Str8* bitcast ([17 x i8]* @.str46 to [0 x i8]*), %Nat8 %5, %Int32 %12, %Nat8 %4)
+	%28 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
+	%29 = load %hart_BusInterface*, %hart_BusInterface** %28
+	%30 = getelementptr %hart_BusInterface, %hart_BusInterface* %29, %Int32 0, %Int32 1
+	%31 = load void (%Nat32, %Word32, %Nat8)*, void (%Nat32, %Word32, %Nat8)** %30
+	call void %31(%Nat32 %19, %Word32 %23, %Nat8 1)
 	br label %endif_0
 else_0:
 ; if_1
-	%33 = bitcast i8 1 to %Word8
-	%34 = icmp eq %Word8 %1, %33
-	br %Bool %34 , label %then_1, label %else_1
+	%32 = bitcast i8 1 to %Word8
+	%33 = icmp eq %Word8 %1, %32
+	br %Bool %33 , label %then_1, label %else_1
 then_1:
-	%35 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
-	%36 = load %Nat32, %Nat32* %35
-	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %36, %Str8* bitcast ([17 x i8]* @.str47 to [0 x i8]*), %Nat8 %5, %Int32 %12, %Nat8 %4)
-	%37 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
-	%38 = load %hart_BusInterface*, %hart_BusInterface** %37
-	%39 = getelementptr %hart_BusInterface, %hart_BusInterface* %38, %Int32 0, %Int32 1
-	%40 = load void (%Nat32, %Word32, %Nat8)*, void (%Nat32, %Word32, %Nat8)** %39
-	call void %40(%Nat32 %20, %Word32 %24, %Nat8 2)
+	%34 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
+	%35 = load %Nat32, %Nat32* %34
+	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %35, %Str8* bitcast ([17 x i8]* @.str47 to [0 x i8]*), %Nat8 %5, %Int32 %12, %Nat8 %4)
+	%36 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
+	%37 = load %hart_BusInterface*, %hart_BusInterface** %36
+	%38 = getelementptr %hart_BusInterface, %hart_BusInterface* %37, %Int32 0, %Int32 1
+	%39 = load void (%Nat32, %Word32, %Nat8)*, void (%Nat32, %Word32, %Nat8)** %38
+	call void %39(%Nat32 %19, %Word32 %23, %Nat8 2)
 	br label %endif_1
 else_1:
 ; if_2
-	%41 = bitcast i8 2 to %Word8
-	%42 = icmp eq %Word8 %1, %41
-	br %Bool %42 , label %then_2, label %endif_2
+	%40 = bitcast i8 2 to %Word8
+	%41 = icmp eq %Word8 %1, %40
+	br %Bool %41 , label %then_2, label %endif_2
 then_2:
-	%43 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
-	%44 = load %Nat32, %Nat32* %43
-	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %44, %Str8* bitcast ([17 x i8]* @.str48 to [0 x i8]*), %Nat8 %5, %Int32 %12, %Nat8 %4)
-	%45 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
-	%46 = load %hart_BusInterface*, %hart_BusInterface** %45
-	%47 = getelementptr %hart_BusInterface, %hart_BusInterface* %46, %Int32 0, %Int32 1
-	%48 = load void (%Nat32, %Word32, %Nat8)*, void (%Nat32, %Word32, %Nat8)** %47
-	call void %48(%Nat32 %20, %Word32 %24, %Nat8 4)
+	%42 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 1
+	%43 = load %Nat32, %Nat32* %42
+	call void (%Nat32, %Str8*, ...) @trace(%Nat32 %43, %Str8* bitcast ([17 x i8]* @.str48 to [0 x i8]*), %Nat8 %5, %Int32 %12, %Nat8 %4)
+	%44 = getelementptr %hart_Hart, %hart_Hart* %hart, %Int32 0, %Int32 2
+	%45 = load %hart_BusInterface*, %hart_BusInterface** %44
+	%46 = getelementptr %hart_BusInterface, %hart_BusInterface* %45, %Int32 0, %Int32 1
+	%47 = load void (%Nat32, %Word32, %Nat8)*, void (%Nat32, %Word32, %Nat8)** %46
+	call void %47(%Nat32 %19, %Word32 %23, %Nat8 4)
 	br label %endif_2
 endif_2:
 	br label %endif_1

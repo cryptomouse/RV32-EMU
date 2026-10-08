@@ -55,10 +55,6 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 			display.poll()
 		}
 	}
-	if display.isOn() {
-		printf("\nclose the display window to exit\n")
-		display.waitClose()
-	}
 	display.shutdown()
 
 	printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")

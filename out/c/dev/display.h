@@ -13,6 +13,7 @@
 #define DISPLAY_REG_HEIGHT 0x10
 #define DISPLAY_REG_FB 0x14
 #define DISPLAY_REG_FRAME 0x18
+#define DISPLAY_REG_CMD 0x1C
 typedef void *(*display_MemMap)(uint32_t adr, uint32_t size);
 void display_init(display_MemMap mm);
 bool display_isOn(void);

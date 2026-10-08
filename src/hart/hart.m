@@ -519,6 +519,7 @@ func execB (hart: *Hart, instr: Word32) -> Nat32 {
 }
 
 
+
 // Load instructions
 func execL (hart: *Hart, instr: Word32) -> Unit {
 	let funct3 = extractFunct3(instr)
@@ -527,8 +528,7 @@ func execL (hart: *Hart, instr: Word32) -> Unit {
 	let rs1 = extractRs1(instr)
 	let rs2 = extractRs2(instr)
 
-	// WAS WRONG: let adr = Nat32 (Int32 hart.regs[rs1] + imm)  // Modest bug
-	let adr = Nat32 Word32 (Int32 hart.regs[rs1] + imm)
+	let adr = Nat32 hart.regs[rs1] + Nat32 imm
 
 	var result: Word32
 
@@ -585,7 +585,7 @@ func execS (hart: *Hart, instr: Word32) -> Unit {
 	let _imm = (imm11to5 << 5) | Word32 imm4to0
 	let imm = expand12(_imm)
 
-	let adr = Nat32 Word32 (Int32 hart.regs[rs1] + imm)
+	let adr = Nat32 hart.regs[rs1] + Nat32 imm
 	let val = hart.regs[rs2]
 
 	if funct3 == 0 {

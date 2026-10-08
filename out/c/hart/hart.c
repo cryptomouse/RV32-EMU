@@ -333,7 +333,7 @@ static void execL(struct hart_hart *hart, uint32_t instr) {
 	const uint8_t rd = decode_extractRd(instr);
 	const uint8_t rs1 = decode_extractRs1(instr);
 	const uint8_t rs2 = decode_extractRs2(instr);
-	const uint32_t adr = (uint32_t)((int32_t)hart->regs[rs1] + imm);
+	const uint32_t adr = hart->regs[rs1] + (uint32_t)abs(imm);
 	uint32_t result = 0x0;
 	if (funct3 == 0x0) {
 		trace(hart->pc, "lb x%d, %d(x%d)\n", rd, imm, rs1);
@@ -364,7 +364,7 @@ static void execS(struct hart_hart *hart, uint32_t instr) {
 	const uint32_t imm11to5 = (uint32_t)funct7;
 	const uint32_t _imm = (imm11to5 << 5) | imm4to0;
 	const int32_t imm = decode_expand12(_imm);
-	const uint32_t adr = (uint32_t)((int32_t)hart->regs[rs1] + imm);
+	const uint32_t adr = hart->regs[rs1] + (uint32_t)abs(imm);
 	const uint32_t val = hart->regs[rs2];
 	if (funct3 == 0x0) {
 		trace(hart->pc, "sb x%d, %d(x%d)\n", rs2, imm, rs1);
