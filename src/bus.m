@@ -8,9 +8,23 @@ include "libc/stdio"
 include "libc/stdlib"
 
 import "mmio"
+import "dev/display"
 
 
 const showText = false
+
+
+public type ReadInterface = (adr: Nat32, size: Nat8) -> Word32
+public type WriteInterface = (adr: Nat32, value: Word32, size: Nat8) -> Unit
+public type IrqInterface = () -> Unit
+
+public type Interface = {
+	read: *ReadInterface
+	write: *WriteInterface
+	irq: *IrqInterface
+}
+
+public type Connector = (interface: *Interface) -> Bool
 
 
 // see mem.ld
@@ -27,13 +41,37 @@ const mmioStart = Nat32 0xF0000000
 const mmioEnd = mmioStart + mmioSize
 
 
+// display registers (offset in the MMIO region)
+const displayMMIOAdr = Nat32 0x1000
+const displayMMIOSize = Nat32 0x1000
+
+
 const ramRegion  = {begin=ramStart, end=ramEnd}
 const romRegion  = {begin=romStart, end=romEnd}
 const mmioRegion = {begin=mmioStart, end=mmioEnd}
+const displayRegion = {begin=mmioStart + displayMMIOAdr, end=mmioStart + displayMMIOAdr + displayMMIOSize}
 
 
 var ram: [ramSize]Word8
 var rom: [romSize]Word8
+
+var displays: [1]display.Device
+
+
+public func init () -> Unit {
+	display.init(&displays[0], &ramPtr)
+}
+
+
+public func deinit () -> Unit {
+	display.deinit(&displays[0])
+}
+
+
+// Service the devices (called periodically by the main loop)
+public func poll () -> Unit {
+	display.poll(&displays[0])
+}
 
 
 public func read (adr: Nat32, size: Nat8) -> Word32 {
@@ -46,6 +84,12 @@ public func read (adr: Nat32, size: Nat8) -> Word32 {
 		let offset = adr - romRegion.begin
 		let ptr: Ptr = &rom[offset]
 		return readFrom(ptr, adr, size)
+
+	} else if isAdressInRegion(adr, displayRegion) {
+		// 32-bit access only
+		if size == 4 {
+			return displays[0].read32(&displays[0], adr - displayRegion.begin)
+		}
 
 	} else if isAdressInRegion(adr, mmioRegion) {
 		let offset = adr - mmioRegion.begin
@@ -70,6 +114,12 @@ public func write (adr: Nat32, value: Word32, size: Nat8) -> Unit {
 		let offset = adr - ramRegion.begin
 		let ptr: Ptr = &ram[offset]
 		writeTo(ptr, adr, value, size)
+
+	} else if isAdressInRegion(adr, displayRegion) {
+		// 32-bit access only
+		if size == 4 {
+			displays[0].write32(&displays[0], adr - displayRegion.begin, value)
+		}
 
 	} else if isAdressInRegion(adr, mmioRegion) {
 		let offset = adr - mmioRegion.begin
@@ -134,7 +184,7 @@ public func memoryViolation (rw: Char8, adr: Nat32) -> Unit {
 	if memviolationCnt > 10 {
 		exit(1)
 	}
-	++memviolationCnt
+	memviolationCnt += 1
 //	memoryViolation_event(0x55) // !
 }
 

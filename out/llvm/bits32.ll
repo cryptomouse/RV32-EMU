@@ -59,13 +59,12 @@ declare void @llvm.stackrestore(i8*)
 ; -- strings --
 ; -- endstrings --
 define %Word32 @bits32_bitmask(%Nat8 %len) alwaysinline {
-	%1 = zext i8 1 to %Word32
-	%2 = zext %Nat8 %len to %Word32
-	%3 = shl %Word32 %1, %2
-	%4 = bitcast %Word32 %3 to %Nat32
-	%5 = sub %Nat32 %4, 1
-	%6 = bitcast %Nat32 %5 to %Word32
-	ret %Word32 %6
+	%1 = zext %Nat8 %len to %Word32
+	%2 = shl %Word32 1, %1
+	%3 = bitcast %Word32 %2 to %Nat32
+	%4 = sub %Nat32 %3, 1
+	%5 = bitcast %Nat32 %4 to %Word32
+	ret %Word32 %5
 }
 
 define %Word32 @bits32_extract(%Word32 %value, %Nat8 %pos, %Nat8 %len) alwaysinline {
@@ -91,20 +90,18 @@ define %Word32 @bits32_insert(%Word32 %value, %Word32 %bitfield, %Nat8 %pos, %Na
 }
 
 define %Word32 @bits32_set(%Word32 %x, %Nat8 %no) alwaysinline {
-	%1 = zext i8 1 to %Word32
-	%2 = zext %Nat8 %no to %Word32
-	%3 = shl %Word32 %1, %2
-	%4 = or %Word32 %x, %3
-	ret %Word32 %4
+	%1 = zext %Nat8 %no to %Word32
+	%2 = shl %Word32 1, %1
+	%3 = or %Word32 %x, %2
+	ret %Word32 %3
 }
 
 define %Word32 @bits32_reset(%Word32 %x, %Nat8 %no) alwaysinline {
-	%1 = zext i8 1 to %Word32
-	%2 = zext %Nat8 %no to %Word32
-	%3 = shl %Word32 %1, %2
-	%4 = xor %Word32 %3, -1
-	%5 = and %Word32 %x, %4
-	ret %Word32 %5
+	%1 = zext %Nat8 %no to %Word32
+	%2 = shl %Word32 1, %1
+	%3 = xor %Word32 %2, -1
+	%4 = and %Word32 %x, %3
+	ret %Word32 %4
 }
 
 define %Word32 @bits32_switch(%Word32 %x, %Nat8 %no, %Bool %val) alwaysinline {
@@ -119,18 +116,15 @@ else_0:
 	ret %Word32 %3
 	br label %endif_0
 endif_0:
-	%5 = zext i8 0 to %Word32
-	ret %Word32 %5
+	ret %Word32 0
 }
 
 define %Bool @bits32_check(%Word32 %x, %Nat8 %no) alwaysinline {
-	%1 = zext i8 1 to %Word32
-	%2 = zext %Nat8 %no to %Word32
-	%3 = shl %Word32 %1, %2
-	%4 = and %Word32 %x, %3
-	%5 = zext i8 0 to %Word32
-	%6 = icmp ne %Word32 %4, %5
-	ret %Bool %6
+	%1 = zext %Nat8 %no to %Word32
+	%2 = shl %Word32 1, %1
+	%3 = and %Word32 %x, %2
+	%4 = icmp ne %Word32 %3, 0
+	ret %Bool %4
 }
 
 

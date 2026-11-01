@@ -80,7 +80,7 @@ bool hart_cycle(struct hart_hart *hart) {
 	if (mie_enabled && pending != 0x0) {
 		uint8_t int_num = 0;
 		while ((pending & ((uint32_t)1 << int_num)) == 0x0) {
-			++int_num;
+			int_num += 1;
 		}
 		const uint32_t mask = (uint32_t)1 << int_num;
 		hart_setCsr(hart, CSR_MIP_REGNO, hart_getCsr(hart, CSR_MIP_REGNO) & ~mask);
@@ -91,7 +91,7 @@ bool hart_cycle(struct hart_hart *hart) {
 	const uint32_t instr = fetch(hart);
 	exec(hart, instr);
 	uint32_t *const mc = (uint32_t *)&hart->csrs[CSR_MCYCLE_REGNO];
-	++*mc;
+	*mc += 1;
 	return !hart->end;
 }
 

@@ -77,6 +77,6 @@ func displaySetDot (state: Bool) -> Unit {
 // called from _trap (see sys/vect.S)
 @alias("__isr")
 public func isr () -> Unit {
-	++tickCounter
+	tickCounter += 1
 }
 

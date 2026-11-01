@@ -5,11 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "bus.h"
-#include "display.h"
 #include "hart.h"
 #include "csr.h"
 static struct hart_hart hart;
-#define DISPLAY_POLL_PERIOD 100000
+#define BUS_POLL_PERIOD 100000
 
 
 int main(int argc, char **argv) {
@@ -28,7 +27,7 @@ int main(int argc, char **argv) {
 		.write = &bus_write
 	};
 	hart_init(&hart, 0, &busctl);
-	display_init(&bus_ramPtr);
+	bus_init();
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 	uint32_t timer_cnt = 0;
 	uint32_t poll_cnt = 0;
@@ -36,18 +35,18 @@ int main(int argc, char **argv) {
 		if (!hart_cycle(&hart)) {
 			break;
 		}
-		++timer_cnt;
+		timer_cnt += 1;
 		if (timer_cnt == 1000) {
 			timer_cnt = 0;
 			hart_interrupt(&hart, HART_INT_SYS_TIMER);
 		}
-		++poll_cnt;
-		if (poll_cnt == DISPLAY_POLL_PERIOD) {
+		poll_cnt += 1;
+		if (poll_cnt == BUS_POLL_PERIOD) {
 			poll_cnt = 0;
-			display_poll();
+			bus_poll();
 		}
 	}
-	display_shutdown();
+	bus_deinit();
 	printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
 	printf("mcycle = %u\n", hart_getCsr(&hart, CSR_MCYCLE_REGNO));
 	printf("\nCore dump:\n");

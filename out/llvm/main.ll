@@ -95,53 +95,51 @@ declare %Str* @secure_getenv(%Str* %name)
 declare i8* @malloc(%SizeT %size)
 declare %Int @system([0 x %ConstChar]* %string)
 ; from included stdio
-%File = type {
-};
-
+%FILE = type opaque;
 %FposT = type %Nat8;
 %CharStr = type %Str;
 %ConstCharStr = type %CharStr;
-declare %Int @fclose(i8* %f)
-declare %Int @feof(i8* %f)
-declare %Int @ferror(i8* %f)
-declare %Int @fflush(i8* %f)
-declare %Int @fgetpos(i8* %f, %FposT* %pos)
-declare i8* @fopen(%ConstCharStr* %fname, %ConstCharStr* %mode)
-declare %SizeT @fread(i8* %buf, %SizeT %size, %SizeT %count, i8* %f)
-declare %SizeT @fwrite(i8* %buf, %SizeT %size, %SizeT %count, i8* %f)
-declare i8* @freopen(%ConstCharStr* %fname, %ConstCharStr* %mode, i8* %f)
-declare %Int @fseek(i8* %f, %LongInt %offset, %Int %whence)
-declare %Int @fsetpos(i8* %f, %FposT* %pos)
-declare %LongInt @ftell(i8* %f)
+declare %Int @fclose(%FILE* %f)
+declare %Int @feof(%FILE* %f)
+declare %Int @ferror(%FILE* %f)
+declare %Int @fflush(%FILE* %f)
+declare %Int @fgetpos(%FILE* %f, %FposT* %pos)
+declare %FILE* @fopen(%ConstCharStr* %fname, %ConstCharStr* %mode)
+declare %SizeT @fread(i8* %buf, %SizeT %size, %SizeT %count, %FILE* %f)
+declare %SizeT @fwrite(i8* %buf, %SizeT %size, %SizeT %count, %FILE* %f)
+declare %FILE* @freopen(%ConstCharStr* %fname, %ConstCharStr* %mode, %FILE* %f)
+declare %Int @fseek(%FILE* %f, %LongInt %offset, %Int %whence)
+declare %Int @fsetpos(%FILE* %f, %FposT* %pos)
+declare %LongInt @ftell(%FILE* %f)
 declare %Int @remove(%ConstCharStr* %fname)
 declare %Int @rename(%ConstCharStr* %old_filename, %ConstCharStr* %new_filename)
-declare void @rewind(i8* %f)
-declare void @setbuf(i8* %f, %CharStr* %buf)
-declare %Int @setvbuf(i8* %f, %CharStr* %buf, %Int %mode, %SizeT %size)
-declare i8* @tmpfile()
+declare void @rewind(%FILE* %f)
+declare void @setbuf(%FILE* %f, %CharStr* %buf)
+declare %Int @setvbuf(%FILE* %f, %CharStr* %buf, %Int %mode, %SizeT %size)
+declare %FILE* @tmpfile()
 declare %CharStr* @tmpnam(%CharStr* %str)
 declare %Int @printf(%ConstCharStr* %str, ...)
 declare %Int @scanf(%ConstCharStr* %str, ...)
-declare %Int @fprintf(i8* %f, %Str* %format, ...)
-declare %Int @fscanf(i8* %f, %ConstCharStr* %format, ...)
+declare %Int @fprintf(%FILE* %f, %Str* %format, ...)
+declare %Int @fscanf(%FILE* %f, %ConstCharStr* %format, ...)
 declare %Int @sscanf(%ConstCharStr* %buf, %ConstCharStr* %format, ...)
 declare %Int @sprintf(%CharStr* %buf, %ConstCharStr* %format, ...)
 declare %Int @snprintf(%CharStr* %buf, %SizeT %size, %ConstCharStr* %format, ...)
-declare %Int @vfprintf(i8* %f, %ConstCharStr* %format, %__VA_List %args)
+declare %Int @vfprintf(%FILE* %f, %ConstCharStr* %format, %__VA_List %args)
 declare %Int @vprintf(%ConstCharStr* %format, %__VA_List %args)
 declare %Int @vsprintf(%CharStr* %str, %ConstCharStr* %format, %__VA_List %args)
 declare %Int @vsnprintf(%CharStr* %str, %SizeT %n, %ConstCharStr* %format, %__VA_List %args)
 declare %Int @__vsnprintf_chk(%CharStr* %dest, %SizeT %len, %Int %flags, %SizeT %dstlen, %ConstCharStr* %format, %__VA_List %arg)
-declare %Int @fgetc(i8* %f)
-declare %Int @fputc(%Int %char, i8* %f)
-declare %CharStr* @fgets(%CharStr* %str, %Int %n, i8* %f)
-declare %Int @fputs(%ConstCharStr* %str, i8* %f)
-declare %Int @getc(i8* %f)
+declare %Int @fgetc(%FILE* %f)
+declare %Int @fputc(%Int %char, %FILE* %f)
+declare %CharStr* @fgets(%CharStr* %str, %Int %n, %FILE* %f)
+declare %Int @fputs(%ConstCharStr* %str, %FILE* %f)
+declare %Int @getc(%FILE* %f)
 declare %Int @getchar()
-declare %Int @putc(%Int %char, i8* %f)
+declare %Int @putc(%Int %char, %FILE* %f)
 declare %Int @putchar(%Int %char)
 declare %Int @puts(%ConstCharStr* %str)
-declare %Int @ungetc(%Int %char, i8* %f)
+declare %Int @ungetc(%Int %char, %FILE* %f)
 declare void @perror(%ConstCharStr* %str)
 ; -- end print includes --
 ; -- print imports 'main' --
@@ -150,57 +148,6 @@ declare void @perror(%ConstCharStr* %str)
 
 ; end from import "builtin"
 ; from included ctypes
-
-; from import "sdl"
-%Window = type {
-};
-
-%Renderer = type {
-};
-
-%Texture = type {
-};
-
-%Rect = type {
-	%Int32,
-	%Int32,
-	%Int32,
-	%Int32
-};
-
-%Event = type {
-};
-
-declare external %Int32 @init(%Word32 %flags)
-declare external void @shutdown()
-declare external %ConstCharStr* @getError()
-declare external %Int32 @setHint(%ConstCharStr* %name, %ConstCharStr* %value)
-declare external void @delay(%Nat32 %ms)
-declare external i8* @createWindow(%ConstCharStr* %title, %Int32 %x, %Int32 %y, %Int32 %w, %Int32 %h, %Word32 %flags)
-declare external void @destroyWindow(i8* %window)
-declare external i8* @createRenderer(i8* %window, %Int32 %index, %Word32 %flags)
-declare external void @destroyRenderer(i8* %renderer)
-declare external %Int32 @renderClear(i8* %renderer)
-declare external %Int32 @renderCopy(i8* %renderer, i8* %texture, %Rect* %srcrect, %Rect* %dstrect)
-declare external void @renderPresent(i8* %renderer)
-declare external i8* @createTexture(i8* %renderer, %Nat32 %format, %Int32 %access, %Int32 %w, %Int32 %h)
-declare external void @destroyTexture(i8* %texture)
-declare external %Int32 @updateTexture(i8* %texture, %Rect* %rect, i8* %pixels, %Int32 %pitch)
-declare external %Int32 @pollEvent(i8* %event)
-
-; end from import "sdl"
-
-; from import "display"
-%display_MemMap = type i8* (%Nat32, %Nat32)*;
-declare void @display_init(%display_MemMap %mm)
-declare %Bool @display_isOn()
-declare %Word32 @display_read32(%Nat32 %adr)
-declare void @display_write32(%Nat32 %adr, %Word32 %value)
-declare void @display_poll()
-declare void @display_waitClose()
-declare void @display_shutdown()
-
-; end from import "display"
 
 ; from import "mmio"
 declare void @mmio_write8(%Nat32 %adr, %Word8 %value)
@@ -212,7 +159,86 @@ declare %Word32 @mmio_read32(%Nat32 %adr)
 
 ; end from import "mmio"
 
+; from import "sdl"
+%SDL_Window = type opaque;
+%SDL_Renderer = type {
+};
+
+%SDL_Texture = type {
+};
+
+%SDL_Rect = type {
+	%Int32,
+	%Int32,
+	%Int32,
+	%Int32
+};
+
+%SDL_Event = type {
+};
+
+declare external %Int32 @SDL_Init(%Word32 %flags)
+declare external void @SDL_Quit()
+declare external %ConstCharStr* @SDL_GetError()
+declare external %Int32 @SDL_SetHint(%ConstCharStr* %name, %ConstCharStr* %value)
+declare external void @SDL_Delay(%Nat32 %ms)
+declare external %SDL_Window* @SDL_CreateWindow(%ConstCharStr* %title, %Int32 %x, %Int32 %y, %Int32 %w, %Int32 %h, %Word32 %flags)
+declare external void @SDL_DestroyWindow(%SDL_Window* %window)
+declare external i8* @SDL_CreateRenderer(%SDL_Window* %window, %Int32 %index, %Word32 %flags)
+declare external void @SDL_DestroyRenderer(i8* %renderer)
+declare external %Int32 @SDL_RenderClear(i8* %renderer)
+declare external %Int32 @SDL_RenderCopy(i8* %renderer, i8* %texture, %SDL_Rect* %srcrect, %SDL_Rect* %dstrect)
+declare external void @SDL_RenderPresent(i8* %renderer)
+declare external i8* @SDL_CreateTexture(i8* %renderer, %Nat32 %format, %Int32 %access, %Int32 %w, %Int32 %h)
+declare external void @SDL_DestroyTexture(i8* %texture)
+declare external %Int32 @SDL_UpdateTexture(i8* %texture, %SDL_Rect* %rect, i8* %pixels, %Int32 %pitch)
+declare external %Int32 @SDL_PollEvent(i8* %event)
+
+; end from import "sdl"
+
+; from import "display"
+%display_MemMap = type i8* (%Nat32, %Nat32)*;
+%display_Device = type {
+	%Word32 (%display_Device*, %Nat32)*,
+	void (%display_Device*, %Nat32, %Word32)*,
+	%Word32,
+	%Word32,
+	%Word32,
+	%Nat32,
+	%Nat32,
+	%Nat32,
+	%Nat32,
+	%display_MemMap,
+	%Nat32,
+	%Nat32,
+	%Bool,
+	%SDL_Window*,
+	i8*,
+	i8*
+};
+
+declare void @display_init(%display_Device* %dev, %display_MemMap %mm)
+declare %Bool @display_isOn(%display_Device* %dev)
+declare void @display_poll(%display_Device* %dev)
+declare void @display_waitClose(%display_Device* %dev)
+declare void @display_deinit(%display_Device* %dev)
+
+; end from import "display"
+
 ; from import "bus"
+%bus_ReadInterface = type %Word32 (%Nat32, %Nat8);
+%bus_WriteInterface = type void (%Nat32, %Word32, %Nat8);
+%bus_IrqInterface = type void ();
+%bus_Interface = type {
+	%bus_ReadInterface*,
+	%bus_WriteInterface*,
+	%bus_IrqInterface*
+};
+
+%bus_Connector = type %Bool (%bus_Interface*);
+declare void @bus_init()
+declare void @bus_deinit()
+declare void @bus_poll()
 declare %Word32 @bus_read(%Nat32 %adr, %Nat8 %size)
 declare void @bus_write(%Nat32 %adr, %Word32 %value, %Nat8 %size)
 declare i8* @bus_ramPtr(%Nat32 %adr, %Nat32 %size)
@@ -360,6 +386,9 @@ declare void @hart_show_regs(%hart_Hart* %hart)
 ; -- endstrings --
 @hart = internal global %hart_Hart zeroinitializer
 define %Int @main(%Int %argc, [0 x %Str8*]* %argv) {
+	%busctl = alloca %hart_BusInterface, align 8
+	%timer_cnt = alloca %Nat32, align 4
+	%poll_cnt = alloca %Nat32, align 4
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([11 x i8]* @.str1 to [0 x i8]*))
 ; if_0
 	%2 = icmp slt %Int %argc, 2
@@ -381,64 +410,60 @@ then_1:
 	call void @exit(%Int 1)
 	br label %endif_1
 endif_1:
-	%10 = alloca %hart_BusInterface, align 8
-	%11 = insertvalue %hart_BusInterface zeroinitializer, %Word32 (%Nat32, %Nat8)* @bus_read, 0
-	%12 = insertvalue %hart_BusInterface %11, void (%Nat32, %Word32, %Nat8)* @bus_write, 1
-	store %hart_BusInterface %12, %hart_BusInterface* %10
-	call void @hart_init(%hart_Hart* @hart, %Nat32 0, %hart_BusInterface* %10)
-	call void @display_init(i8* (%Nat32, %Nat32)* @bus_ramPtr)
-	%13 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str3 to [0 x i8]*))
-	%14 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %14
-	%15 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %15
+	%10 = insertvalue %hart_BusInterface zeroinitializer, %Word32 (%Nat32, %Nat8)* @bus_read, 0
+	%11 = insertvalue %hart_BusInterface %10, void (%Nat32, %Word32, %Nat8)* @bus_write, 1
+	store %hart_BusInterface %11, %hart_BusInterface* %busctl
+	call void @hart_init(%hart_Hart* @hart, %Nat32 0, %hart_BusInterface* %busctl)
+	call void @bus_init()
+	%12 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str3 to [0 x i8]*))
+	store %Nat32 0, %Nat32* %timer_cnt
+	store %Nat32 0, %Nat32* %poll_cnt
 ; while_1
 	br label %again_1
 again_1:
 	br %Bool 1 , label %body_1, label %break_1
 body_1:
 ; if_2
-	%16 = call %Bool @hart_cycle(%hart_Hart* @hart)
-	%17 = xor %Bool %16, 1
-	br %Bool %17 , label %then_2, label %endif_2
+	%13 = call %Bool @hart_cycle(%hart_Hart* @hart)
+	%14 = xor %Bool %13, 1
+	br %Bool %14 , label %then_2, label %endif_2
 then_2:
 	br label %break_1
 	br label %endif_2
 endif_2:
-	%19 = load %Nat32, %Nat32* %14
-	%20 = add %Nat32 %19, 1
-	store %Nat32 %20, %Nat32* %14
+	%16 = load %Nat32, %Nat32* %timer_cnt
+	%17 = add %Nat32 %16, 1
+	store %Nat32 %17, %Nat32* %timer_cnt
 ; if_3
-	%21 = load %Nat32, %Nat32* %14
-	%22 = icmp eq %Nat32 %21, 1000
-	br %Bool %22 , label %then_3, label %endif_3
+	%18 = load %Nat32, %Nat32* %timer_cnt
+	%19 = icmp eq %Nat32 %18, 1000
+	br %Bool %19 , label %then_3, label %endif_3
 then_3:
-	store %Nat32 0, %Nat32* %14
-	%23 = zext i8 1 to %Word32
-	call void @hart_interrupt(%hart_Hart* @hart, %Word32 %23)
+	store %Nat32 0, %Nat32* %timer_cnt
+	call void @hart_interrupt(%hart_Hart* @hart, %Word32 1)
 	br label %endif_3
 endif_3:
-	%24 = load %Nat32, %Nat32* %15
-	%25 = add %Nat32 %24, 1
-	store %Nat32 %25, %Nat32* %15
+	%20 = load %Nat32, %Nat32* %poll_cnt
+	%21 = add %Nat32 %20, 1
+	store %Nat32 %21, %Nat32* %poll_cnt
 ; if_4
-	%26 = load %Nat32, %Nat32* %15
-	%27 = icmp eq %Nat32 %26, 100000
-	br %Bool %27 , label %then_4, label %endif_4
+	%22 = load %Nat32, %Nat32* %poll_cnt
+	%23 = icmp eq %Nat32 %22, 100000
+	br %Bool %23 , label %then_4, label %endif_4
 then_4:
-	store %Nat32 0, %Nat32* %15
-	call void @display_poll()
+	store %Nat32 0, %Nat32* %poll_cnt
+	call void @bus_poll()
 	br label %endif_4
 endif_4:
 	br label %again_1
 break_1:
-	call void @display_shutdown()
-	%28 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str4 to [0 x i8]*))
-	%29 = call %Word32 @hart_getCsr(%hart_Hart* @hart, %Nat16 2816)
-	%30 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str5 to [0 x i8]*), %Word32 %29)
-	%31 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str6 to [0 x i8]*))
+	call void @bus_deinit()
+	%24 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([82 x i8]* @.str4 to [0 x i8]*))
+	%25 = call %Word32 @hart_getCsr(%hart_Hart* @hart, %Nat16 2816)
+	%26 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str5 to [0 x i8]*), %Word32 %25)
+	%27 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str6 to [0 x i8]*))
 	call void @hart_show_regs(%hart_Hart* @hart)
-	%32 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str7 to [0 x i8]*))
+	%28 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str7 to [0 x i8]*))
 	call void @bus_show_ram()
 	ret %Int 0
 }

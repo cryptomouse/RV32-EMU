@@ -20,220 +20,221 @@
 #define MAX_HEIGHT 4096
 #define PREFERRED_WINDOW_WIDTH 640
 #define PREFERRED_WINDOW_HEIGHT 480
-static display_MemMap memMap;
-static uint32_t cr;
-static uint32_t sr;
-static uint32_t er;
-static uint32_t width;
-static uint32_t height;
-static uint32_t fb;
-static uint32_t framecnt;
-static uint32_t activeWidth;
-static uint32_t activeHeight;
-static bool sdlReady = false;
-static SDL_Window *window;
-static SDL_Renderer *renderer;
-static SDL_Texture *texture;
 
-void display_init(display_MemMap mm) {
-	memMap = mm;
+static uint32_t read32(display_Device *dev, uint32_t adr);
+static void write32(display_Device *dev, uint32_t adr, uint32_t value);
+
+static void reset(display_Device *dev) {
+	*dev = (display_Device){0};
+	dev->read32 = &read32;
+	dev->write32 = &write32;
+}
+
+void display_init(display_Device *dev, display_MemMap mm) {
+	reset(dev);
+	dev->memMap = mm;
 }
 
 
-bool display_isOn(void) {
-	return (sr & SR_ON) != 0x0;
+bool display_isOn(display_Device *dev) {
+	return (dev->sr & SR_ON) != 0x0;
 }
 
 
-uint32_t display_read32(uint32_t adr) {
+static uint32_t read32(display_Device *dev, uint32_t adr) {
 	if (adr == DISPLAY_REG_CR) {
-		return cr;
+		return dev->cr;
 	} else if (adr == DISPLAY_REG_SR) {
-		if (er != 0x0) {
-			return sr | SR_ERR;
+		if (dev->er != 0x0) {
+			return dev->sr | SR_ERR;
 		}
-		return sr;
+		return dev->sr;
 	} else if (adr == DISPLAY_REG_ER) {
-		return er;
+		return dev->er;
 	} else if (adr == DISPLAY_REG_WIDTH) {
-		return width;
+		return dev->width;
 	} else if (adr == DISPLAY_REG_HEIGHT) {
-		return height;
+		return dev->height;
 	} else if (adr == DISPLAY_REG_FB) {
-		return fb;
+		return dev->fb;
 	} else if (adr == DISPLAY_REG_FRAME) {
-		return framecnt;
+		return dev->framecnt;
 	}
 	return 0x0;
 }
 
-static bool openWindow(void);
-static void closeWindow(void);
-static void refresh(void);
+static bool openWindow(display_Device *dev);
+static void closeWindow(display_Device *dev);
+static void refresh(display_Device *dev);
+static void setErrorFlag(display_Device *dev, uint32_t e);
 
-void display_write32(uint32_t adr, uint32_t value) {
+static void write32(display_Device *dev, uint32_t adr, uint32_t value) {
 	if (adr == DISPLAY_REG_CR) {
 		const bool enable = (value & CR_EN) != 0x0;
-		const bool enabled = (cr & CR_EN) != 0x0;
-		cr = value & CR_EN;
+		const bool enabled = (dev->cr & CR_EN) != 0x0;
+		dev->cr = value & CR_EN;
 		if (enable && !enabled) {
-			if (!openWindow()) {
-				cr = 0x0;
+			if (!openWindow(dev)) {
+				dev->cr = 0x0;
 			}
 		} else if (!enable && enabled) {
-			closeWindow();
+			closeWindow(dev);
 		}
 	} else if (adr == DISPLAY_REG_CMD) {
 		if ((value & CMD_REFRESH) != 0x0) {
-			refresh();
+			refresh(dev);
 		}
 	} else if (adr == DISPLAY_REG_ER) {
-		er = er & ~value;
+		dev->er = dev->er & ~value;
 	} else if (adr == DISPLAY_REG_WIDTH) {
 		const uint32_t w = value;
 		if (w == 0 || w > MAX_WIDTH) {
-			er = er | ER_WIDTH;
+			setErrorFlag(dev, ER_WIDTH);
 		} else {
-			width = w;
+			dev->width = w;
 		}
 	} else if (adr == DISPLAY_REG_HEIGHT) {
 		const uint32_t h = value;
 		if (h == 0 || h > MAX_HEIGHT) {
-			er = er | ER_HEIGHT;
+			setErrorFlag(dev, ER_HEIGHT);
 		} else {
-			height = h;
+			dev->height = h;
 		}
 	} else if (adr == DISPLAY_REG_FB) {
 		if ((value & 0x3) != 0x0) {
-			er = er | ER_FB;
+			setErrorFlag(dev, ER_FB);
 		} else {
-			fb = value;
+			dev->fb = value;
 		}
 	}
 }
 
-static void destroyWindow(void);
+static void destroyWindow(display_Device *dev);
 
-static bool openWindow(void) {
-	sr = 0x0;
-	if (width == 0 || width > MAX_WIDTH || height == 0 || height > MAX_HEIGHT) {
-		printf("display: bad resolution %ux%u\n", width, height);
-		er = er | ER_GEOM;
+static bool openWindow(display_Device *dev) {
+	dev->sr = 0x0;
+	if (dev->width == 0 || dev->width > MAX_WIDTH || dev->height == 0 || dev->height > MAX_HEIGHT) {
+		printf("display: bad resolution %ux%u\n", dev->width, dev->height);
+		setErrorFlag(dev, ER_GEOM);
 		return false;
 	}
-	if (!sdlReady) {
+	if (!dev->sdlReady) {
 		SDL_SetHint("SDL_NO_SIGNAL_HANDLERS", "1");
 		if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 			printf("display: SDL_Init failed: %s\n", SDL_GetError());
-			er = er | ER_LINK;
+			setErrorFlag(dev, ER_LINK);
 			return false;
 		}
-		sdlReady = true;
+		dev->sdlReady = true;
 	}
 	uint32_t scale = 1;
-	while (width * (scale + 1) <= PREFERRED_WINDOW_WIDTH && height * (scale + 1) <= PREFERRED_WINDOW_HEIGHT) {
-		++scale;
+	while (dev->width * (scale + 1) <= PREFERRED_WINDOW_WIDTH && dev->height * (scale + 1) <= PREFERRED_WINDOW_HEIGHT) {
+		scale += 1;
 	}
-	window = SDL_CreateWindow("RV32-EMU", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, (int32_t)(width * scale), (int32_t)(height * scale), SDL_WINDOW_SHOWN);
-	if (window != NULL) {
-		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	dev->window = SDL_CreateWindow("RV32-EMU", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, (int32_t)(dev->width * scale), (int32_t)(dev->height * scale), SDL_WINDOW_SHOWN);
+	if (dev->window != NULL) {
+		dev->renderer = SDL_CreateRenderer(dev->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	}
-	if (renderer != NULL) {
-		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, (int32_t)width, (int32_t)height);
+	if (dev->renderer != NULL) {
+		dev->texture = SDL_CreateTexture(dev->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, (int32_t)dev->width, (int32_t)dev->height);
 	}
-	if (texture == NULL) {
+	if (dev->texture == NULL) {
 		printf("display: cannot create window: %s\n", SDL_GetError());
-		destroyWindow();
-		er = er | ER_LINK;
+		destroyWindow(dev);
+		setErrorFlag(dev, ER_LINK);
 		return false;
 	}
-	activeWidth = width;
-	activeHeight = height;
-	framecnt = 0;
-	sr = SR_ON;
-	SDL_RenderClear(renderer);
-	SDL_RenderPresent(renderer);
+	dev->activeWidth = dev->width;
+	dev->activeHeight = dev->height;
+	dev->framecnt = 0;
+	dev->sr = SR_ON;
+	SDL_RenderClear(dev->renderer);
+	SDL_RenderPresent(dev->renderer);
 	return true;
 }
 
-static void closeWindow(void) {
-	destroyWindow();
-	sr = 0x0;
+static void closeWindow(display_Device *dev) {
+	destroyWindow(dev);
+	dev->sr = 0x0;
 }
 
-static void destroyWindow(void) {
-	if (texture != NULL) {
-		SDL_DestroyTexture(texture);
-		texture = NULL;
+static void destroyWindow(display_Device *dev) {
+	if (dev->texture != NULL) {
+		SDL_DestroyTexture(dev->texture);
+		dev->texture = NULL;
 	}
-	if (renderer != NULL) {
-		SDL_DestroyRenderer(renderer);
-		renderer = NULL;
+	if (dev->renderer != NULL) {
+		SDL_DestroyRenderer(dev->renderer);
+		dev->renderer = NULL;
 	}
-	if (window != NULL) {
-		SDL_DestroyWindow(window);
-		window = NULL;
+	if (dev->window != NULL) {
+		SDL_DestroyWindow(dev->window);
+		dev->window = NULL;
 	}
 }
 
 
-static void refresh(void) {
-	if (!display_isOn()) {
-		er = er | ER_OFF;
+static void refresh(display_Device *dev) {
+	if (!display_isOn(dev)) {
+		setErrorFlag(dev, ER_OFF);
 		return;
 	}
-	const uint32_t pitch = activeWidth * (uint32_t)sizeof(uint32_t);
-	void *const pixels = memMap(fb, pitch * activeHeight);
-	if (pixels == NULL || (fb & 0x3) != 0x0) {
-		printf("display: bad framebuffer address 0x%08x\n", fb);
-		er = er | ER_FBMAP;
+	const uint32_t pitch = dev->activeWidth * (uint32_t)sizeof(uint32_t);
+	void *const pixels = dev->memMap(dev->fb, pitch * dev->activeHeight);
+	if (pixels == NULL || (dev->fb & 0x3) != 0x0) {
+		printf("display: bad framebuffer address 0x%08x\n", dev->fb);
+		setErrorFlag(dev, ER_FBMAP);
 		return;
 	}
-	SDL_UpdateTexture(texture, NULL, pixels, (int32_t)pitch);
-	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, texture, NULL, NULL);
-	SDL_RenderPresent(renderer);
-	++framecnt;
+	SDL_UpdateTexture(dev->texture, NULL, pixels, (int32_t)pitch);
+	SDL_RenderClear(dev->renderer);
+	SDL_RenderCopy(dev->renderer, dev->texture, NULL, NULL);
+	SDL_RenderPresent(dev->renderer);
+	dev->framecnt += 1;
 }
 
 static uint32_t eventType(SDL_Event *event);
-static void linkLost(void);
+static void linkLost(display_Device *dev);
 
-void display_poll(void) {
-	if (!display_isOn()) {
+void display_poll(display_Device *dev) {
+	if (!display_isOn(dev)) {
 		return;
 	}
 	SDL_Event event = {0};
 	while (SDL_PollEvent(&event) != 0) {
 		if (eventType(&event) == SDL_QUIT) {
-			linkLost();
+			linkLost(dev);
 			return;
 		}
 	}
 }
 
 
-static void linkLost(void) {
+static void linkLost(display_Device *dev) {
 	printf("display: link lost\n");
-	destroyWindow();
-	cr = 0x0;
-	sr = 0x0;
-	er = er | ER_LINK;
+	destroyWindow(dev);
+	dev->cr = 0x0;
+	dev->sr = 0x0;
+	setErrorFlag(dev, ER_LINK);
 }
 
-void display_waitClose(void) {
-	while (display_isOn()) {
-		display_poll();
+void display_waitClose(display_Device *dev) {
+	while (display_isOn(dev)) {
+		display_poll(dev);
 		SDL_Delay(16);
 	}
 }
 
-void display_shutdown(void) {
-	closeWindow();
-	if (sdlReady) {
+void display_deinit(display_Device *dev) {
+	closeWindow(dev);
+	if (dev->sdlReady) {
 		SDL_Quit();
-		sdlReady = false;
+		dev->sdlReady = false;
 	}
+}
+
+static void setErrorFlag(display_Device *dev, uint32_t e) {
+	dev->er = dev->er | e;
 }
 
 static uint32_t eventType(SDL_Event *event) {

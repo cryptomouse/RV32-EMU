@@ -15,12 +15,34 @@
 #define DISPLAY_REG_FRAME 0x18
 #define DISPLAY_REG_CMD 0x1C
 typedef void *(*display_MemMap)(uint32_t adr, uint32_t size);
-void display_init(display_MemMap mm);
-bool display_isOn(void);
-uint32_t display_read32(uint32_t adr);
-void display_write32(uint32_t adr, uint32_t value);
-void display_poll(void);
-void display_waitClose(void);
-void display_shutdown(void);
+struct display_device;
+typedef struct display_device display_Device;
+typedef struct display_device display_Device;
+struct display_device {
+	uint32_t (*read32)(display_Device *dev, uint32_t adr);
+	void (*write32)(display_Device *dev, uint32_t adr, uint32_t value);
+	uint32_t cr;
+	uint32_t sr;
+	uint32_t er;
+	uint32_t width;
+	uint32_t height;
+	uint32_t fb;
+	uint32_t framecnt;
+
+
+	display_MemMap memMap;
+	uint32_t activeWidth;
+	uint32_t activeHeight;
+
+	bool sdlReady;
+	SDL_Window *window;
+	SDL_Renderer *renderer;
+	SDL_Texture *texture;
+};
+void display_init(display_Device *dev, display_MemMap mm);
+bool display_isOn(display_Device *dev);
+void display_poll(display_Device *dev);
+void display_waitClose(display_Device *dev);
+void display_deinit(display_Device *dev);
 #endif
 

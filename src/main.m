@@ -5,15 +5,14 @@ include "libc/stdlib"
 include "libc/stdio"
 
 import "bus"
-import "dev/display"
 import "hart/hart" as rvHart
 import "hart/csr" as csr
 
 
 var hart: rvHart.Hart
 
-// how often (in hart cycles) window events are handled
-const displayPollPeriod = Nat32 100000
+// how often (in hart cycles) the devices are serviced
+const busPollPeriod = Nat32 100000
 
 
 func main (argc: Int, argv: *[]*Str8) -> Int {
@@ -36,7 +35,7 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 	}
 
 	rvHart.init(&hart, 0, &busctl)
-	display.init(&bus.ramPtr)
+	bus.init()
 
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n")
 
@@ -50,18 +49,18 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 		}
 
 		// Generate timer interrupt (intSysTimer)
-		++timer_cnt
+		timer_cnt += 1
 		if timer_cnt == 1000 {
 			timer_cnt = 0
 			//printf("Timer interrupt generated\n")
 			rvHart.interrupt(&hart, rvHart.intSysTimer)
 		}
 
-		// Keep the display window responsive
-		++poll_cnt
-		if poll_cnt == displayPollPeriod {
+		// Keep the devices (display window) responsive
+		poll_cnt += 1
+		if poll_cnt == busPollPeriod {
 			poll_cnt = 0
-			display.poll()
+			bus.poll()
 		}
 	}
 
@@ -70,7 +69,7 @@ func main (argc: Int, argv: *[]*Str8) -> Int {
 	// 	printf("\nclose the display window to exit\n")
 	// 	display.waitClose()
 	// }
-	display.shutdown()
+	bus.deinit()
 
 	printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n")
 	printf("mcycle = %u\n", rvHart.getCsr(&hart, csr.mcycleRegno))

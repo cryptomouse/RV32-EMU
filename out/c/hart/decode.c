@@ -49,11 +49,11 @@ int16_t decode_extractBImm(uint32_t instr) {
 	const uint16_t imm4to1_11 = (uint16_t)decode_extractRd(instr);
 	const uint8_t imm12_10to5 = decode_extractFunct7(instr);
 	const uint16_t bit4to1 = imm4to1_11 & 0x1E;
-	const uint16_t bit10to5 = (uint16_t)(imm12_10to5 & 0x3F) << 5;
-	const uint16_t bit11 = (imm4to1_11 & 0x1) << 11;
-	const uint16_t bit12 = (uint16_t)(imm12_10to5 & 0x40) << 6;
+	const uint16_t bit10to5 = (uint16_t)((uint16_t)(imm12_10to5 & 0x3F) << 5);
+	const uint16_t bit11 = (uint16_t)((imm4to1_11 & 0x1) << 11);
+	const uint16_t bit12 = (uint16_t)((uint16_t)(imm12_10to5 & 0x40) << 6);
 	uint16_t imm_bits = bit12 | bit11 | bit10to5 | bit4to1;
-	if ((imm_bits & ((uint16_t)1 << 12)) != 0x0) {
+	if ((imm_bits & ((uint16_t)((uint16_t)1 << 12))) != 0x0) {
 		imm_bits = 0xF000 | imm_bits;
 	}
 	return (int16_t)imm_bits;

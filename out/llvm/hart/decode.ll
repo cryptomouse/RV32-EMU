@@ -131,114 +131,98 @@ define %Word32 @decode_extractImm31_12(%Word32 %instr) {
 }
 
 define %Int16 @decode_extractBImm(%Word32 %instr) {
+	%imm_bits = alloca %Word16, align 2
 	%1 = call %Nat8 @decode_extractRd(%Word32 %instr)
 	%2 = zext %Nat8 %1 to %Word16
 	%3 = call %Word8 @decode_extractFunct7(%Word32 %instr)
-	%4 = zext i8 30 to %Word16
-	%5 = and %Word16 %2, %4
-	%6 = bitcast i8 63 to %Word8
-	%7 = and %Word8 %3, %6
-	%8 = zext %Word8 %7 to %Word16
-	%9 = zext i8 5 to %Word16
-	%10 = shl %Word16 %8, %9
-	%11 = zext i8 1 to %Word16
-	%12 = and %Word16 %2, %11
-	%13 = zext i8 11 to %Word16
-	%14 = shl %Word16 %12, %13
-	%15 = bitcast i8 64 to %Word8
-	%16 = and %Word8 %3, %15
-	%17 = zext %Word8 %16 to %Word16
-	%18 = zext i8 6 to %Word16
-	%19 = shl %Word16 %17, %18
-	%20 = alloca %Word16, align 2
-	%21 = or %Word16 %19, %14
-	%22 = or %Word16 %21, %10
-	%23 = or %Word16 %22, %5
-	store %Word16 %23, %Word16* %20
+	%4 = and %Word16 %2, 30
+	%5 = and %Word8 %3, 63
+	%6 = zext %Word8 %5 to %Word16
+	%7 = zext i8 5 to %Word16
+	%8 = shl %Word16 %6, %7
+	%9 = and %Word16 %2, 1
+	%10 = zext i8 11 to %Word16
+	%11 = shl %Word16 %9, %10
+	%12 = and %Word8 %3, 64
+	%13 = zext %Word8 %12 to %Word16
+	%14 = zext i8 6 to %Word16
+	%15 = shl %Word16 %13, %14
+	%16 = or %Word16 %15, %11
+	%17 = or %Word16 %16, %8
+	%18 = or %Word16 %17, %4
+	store %Word16 %18, %Word16* %imm_bits
 ; if_0
-	%24 = load %Word16, %Word16* %20
-	%25 = and %Word16 %24, 4096
-	%26 = zext i8 0 to %Word16
-	%27 = icmp ne %Word16 %25, %26
-	br %Bool %27 , label %then_0, label %endif_0
+	%19 = load %Word16, %Word16* %imm_bits
+	%20 = and %Word16 %19, 4096
+	%21 = icmp ne %Word16 %20, 0
+	br %Bool %21 , label %then_0, label %endif_0
 then_0:
-	%28 = bitcast i16 61440 to %Word16
-	%29 = load %Word16, %Word16* %20
-	%30 = or %Word16 %28, %29
-	store %Word16 %30, %Word16* %20
+	%22 = load %Word16, %Word16* %imm_bits
+	%23 = or %Word16 61440, %22
+	store %Word16 %23, %Word16* %imm_bits
 	br label %endif_0
 endif_0:
-	%31 = load %Word16, %Word16* %20
-	%32 = bitcast %Word16 %31 to %Int16
-	ret %Int16 %32
+	%24 = load %Word16, %Word16* %imm_bits
+	%25 = bitcast %Word16 %24 to %Int16
+	ret %Int16 %25
 }
 
 define %Word32 @decode_extractJalImm(%Word32 %instr) {
 	%1 = call %Word32 @decode_extractImm31_12(%Word32 %instr)
 	%2 = zext i8 0 to %Word32
 	%3 = lshr %Word32 %1, %2
-	%4 = zext i8 255 to %Word32
-	%5 = and %Word32 %3, %4
-	%6 = zext i8 12 to %Word32
-	%7 = shl %Word32 %5, %6
-	%8 = zext i8 8 to %Word32
-	%9 = lshr %Word32 %1, %8
-	%10 = zext i8 1 to %Word32
-	%11 = and %Word32 %9, %10
-	%12 = zext i8 11 to %Word32
-	%13 = shl %Word32 %11, %12
-	%14 = zext i8 9 to %Word32
-	%15 = lshr %Word32 %1, %14
-	%16 = zext i16 1023 to %Word32
-	%17 = and %Word32 %15, %16
-	%18 = zext i8 1 to %Word32
-	%19 = shl %Word32 %17, %18
-	%20 = zext i8 19 to %Word32
-	%21 = lshr %Word32 %1, %20
-	%22 = zext i8 1 to %Word32
-	%23 = and %Word32 %21, %22
-	%24 = zext i8 20 to %Word32
-	%25 = shl %Word32 %23, %24
-	%26 = or %Word32 %25, %7
-	%27 = or %Word32 %26, %13
-	%28 = or %Word32 %27, %19
-	ret %Word32 %28
+	%4 = and %Word32 %3, 255
+	%5 = zext i8 12 to %Word32
+	%6 = shl %Word32 %4, %5
+	%7 = zext i8 8 to %Word32
+	%8 = lshr %Word32 %1, %7
+	%9 = and %Word32 %8, 1
+	%10 = zext i8 11 to %Word32
+	%11 = shl %Word32 %9, %10
+	%12 = zext i8 9 to %Word32
+	%13 = lshr %Word32 %1, %12
+	%14 = and %Word32 %13, 1023
+	%15 = zext i8 1 to %Word32
+	%16 = shl %Word32 %14, %15
+	%17 = zext i8 19 to %Word32
+	%18 = lshr %Word32 %1, %17
+	%19 = and %Word32 %18, 1
+	%20 = zext i8 20 to %Word32
+	%21 = shl %Word32 %19, %20
+	%22 = or %Word32 %21, %6
+	%23 = or %Word32 %22, %11
+	%24 = or %Word32 %23, %16
+	ret %Word32 %24
 }
 
 define %Int32 @decode_expand12(%Word32 %val_12bit) {
 ; if_0
-	%1 = zext i16 2048 to %Word32
-	%2 = and %Word32 %val_12bit, %1
-	%3 = zext i8 0 to %Word32
-	%4 = icmp ne %Word32 %2, %3
-	br %Bool %4 , label %then_0, label %endif_0
+	%1 = and %Word32 %val_12bit, 2048
+	%2 = icmp ne %Word32 %1, 0
+	br %Bool %2 , label %then_0, label %endif_0
 then_0:
-	%5 = bitcast i32 4294963200 to %Word32
-	%6 = or %Word32 %val_12bit, %5
-	%7 = bitcast %Word32 %6 to %Int32
-	ret %Int32 %7
+	%3 = or %Word32 %val_12bit, 4294963200
+	%4 = bitcast %Word32 %3 to %Int32
+	ret %Int32 %4
 	br label %endif_0
 endif_0:
-	%9 = bitcast %Word32 %val_12bit to %Int32
-	ret %Int32 %9
+	%6 = bitcast %Word32 %val_12bit to %Int32
+	ret %Int32 %6
 }
 
 define %Int32 @decode_expand20(%Word32 %val_20bit) {
 ; if_0
-	%1 = bitcast i32 524288 to %Word32
-	%2 = and %Word32 %val_20bit, %1
-	%3 = zext i8 0 to %Word32
-	%4 = icmp ne %Word32 %2, %3
-	br %Bool %4 , label %then_0, label %endif_0
+	%1 = and %Word32 %val_20bit, 524288
+	%2 = icmp ne %Word32 %1, 0
+	br %Bool %2 , label %then_0, label %endif_0
 then_0:
-	%5 = bitcast i32 4293918720 to %Word32
-	%6 = or %Word32 %val_20bit, %5
-	%7 = bitcast %Word32 %6 to %Int32
-	ret %Int32 %7
+	%3 = or %Word32 %val_20bit, 4293918720
+	%4 = bitcast %Word32 %3 to %Int32
+	ret %Int32 %4
 	br label %endif_0
 endif_0:
-	%9 = bitcast %Word32 %val_20bit to %Int32
-	ret %Int32 %9
+	%6 = bitcast %Word32 %val_20bit to %Int32
+	ret %Int32 %6
 }
 
 

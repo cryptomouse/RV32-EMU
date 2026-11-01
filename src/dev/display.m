@@ -79,256 +79,275 @@ const preferredWindowHeight = Nat32 480
 public type MemMap = *(adr: Nat32, size: Nat32) -> Ptr
 
 
-var memMap: MemMap
+public type Device = {
+	public read32: *(dev: *Device, adr: Nat32) -> Word32
+	public write32: *(dev: *Device, adr: Nat32, value: Word32) -> Unit
 
-var cr: Word32
-var sr: Word32  // only ON is kept here, ERR is derived from ER
-var er: Word32
-var width: Nat32
-var height: Nat32
-var fb: Nat32
-var framecnt: Nat32
-
-// geometry the window was created with
-var activeWidth: Nat32
-var activeHeight: Nat32
-
-var sdlReady = false
-var window: *sdl.Window
-var renderer: *sdl.Renderer
-var texture: *sdl.Texture
+	// device registers
+	cr: Word32
+	sr: Word32  // only ON is kept here, ERR is derived from ER
+	er: Word32
+	width: Nat32
+	height: Nat32
+	fb: Nat32
+	framecnt: Nat32
 
 
-public func init (mm: MemMap) -> Unit {
-	memMap = mm
+	memMap: MemMap
+
+	// geometry the window was created with
+	activeWidth: Nat32
+	activeHeight: Nat32
+
+	sdlReady: Bool
+	window: *sdl.Window
+	renderer: *sdl.Renderer
+	texture: *sdl.Texture
 }
 
 
-public func isOn () -> Bool {
-	return (sr & srON) != 0
+func reset (dev: *Device) -> Unit {
+	*dev = {}
+	dev.read32 = &read32
+	dev.write32 = &write32
+}
+
+public func init (dev: *Device, mm: MemMap) -> Unit {
+	reset(dev)
+	dev.memMap = mm
 }
 
 
-public func read32 (adr: Nat32) -> Word32 {
+public func isOn (dev: *Device) -> Bool {
+	return (dev.sr & srON) != 0
+}
+
+
+func read32 (dev: *Device, adr: Nat32) -> Word32 {
 	if adr == regCR {
-		return cr
+		return dev.cr
 	} else if adr == regSR {
-		if er != 0 {
-			return sr | srERR
+		if dev.er != 0 {
+			return dev.sr | srERR
 		}
-		return sr
+		return dev.sr
 	} else if adr == regER {
-		return er
+		return dev.er
 	} else if adr == regWidth {
-		return Word32 width
+		return Word32 dev.width
 	} else if adr == regHeight {
-		return Word32 height
+		return Word32 dev.height
 	} else if adr == regFB {
-		return Word32 fb
+		return Word32 dev.fb
 	} else if adr == regFrame {
-		return Word32 framecnt
+		return Word32 dev.framecnt
 	}
 	return 0
 }
 
 
-public func write32 (adr: Nat32, value: Word32) -> Unit {
+func write32 (dev: *Device, adr: Nat32, value: Word32) -> Unit {
 	if adr == regCR {
 		let enable = (value & crEN) != 0
-		let enabled = (cr & crEN) != 0
-		cr = value & crEN
+		let enabled = (dev.cr & crEN) != 0
+		dev.cr = value & crEN
 		if enable and not enabled {
-			if not openWindow() {
-				cr = 0
+			if not openWindow(dev) {
+				dev.cr = 0
 			}
 		} else if not enable and enabled {
-			closeWindow()
+			closeWindow(dev)
 		}
 	} else if adr == regCMD {
 		if (value & cmdREFRESH) != 0 {
-			refresh()
+			refresh(dev)
 		}
 	} else if adr == regER {
-		er = er & ~value
+		dev.er = dev.er & ~value
 	} else if adr == regWidth {
 		let w = unsafe(Nat32 value)
 		if w == 0 or w > maxWidth {
-			er = er | erWidth
+			setErrorFlag(dev, erWidth)
 		} else {
-			width = w
+			dev.width = w
 		}
 	} else if adr == regHeight {
 		let h = unsafe(Nat32 value)
 		if h == 0 or h > maxHeight {
-			er = er | erHeight
+			setErrorFlag(dev, erHeight)
 		} else {
-			height = h
+			dev.height = h
 		}
 	} else if adr == regFB {
 		if (value & 3) != 0 {
-			er = er | erFB
+			setErrorFlag(dev, erFB)
 		} else {
-			fb = unsafe(Nat32 value)
+			dev.fb = unsafe(Nat32 value)
 		}
 	}
 }
 
 
-func openWindow () -> Bool {
-	sr = 0
+func openWindow (dev: *Device) -> Bool {
+	dev.sr = 0
 
-	if width == 0 or width > maxWidth or height == 0 or height > maxHeight {
-		printf("display: bad resolution %ux%u\n", width, height)
-		er = er | erGEOM
+	if dev.width == 0 or dev.width > maxWidth or dev.height == 0 or dev.height > maxHeight {
+		printf("display: bad resolution %ux%u\n", dev.width, dev.height)
+		setErrorFlag(dev, erGEOM)
 		return false
 	}
 
-	if not sdlReady {
+	if not dev.sdlReady {
 		// keep Ctrl+C killing the emulator: otherwise SDL turns it into SDL_QUIT,
 		// which we treat as a closed window
 		sdl.setHint("SDL_NO_SIGNAL_HANDLERS", "1")
 		if sdl.init(sdl.initVideo) < 0 {
 			printf("display: SDL_Init failed: %s\n", sdl.getError())
-			er = er | erLINK
+			setErrorFlag(dev, erLINK)
 			return false
 		}
-		sdlReady = true
+		dev.sdlReady = true
 	}
 
 	var scale = Nat32 1
-	while width * (scale + 1) <= preferredWindowWidth and height * (scale + 1) <= preferredWindowHeight {
-		++scale
+	while dev.width * (scale + 1) <= preferredWindowWidth and dev.height * (scale + 1) <= preferredWindowHeight {
+		scale += 1
 	}
 
-	window = sdl.createWindow(
+	dev.window = sdl.createWindow(
 		"RV32-EMU",
 		sdl.windowposCentered,
 		sdl.windowposCentered,
-		Int32 (width * scale), Int32 (height * scale),
+		Int32 (dev.width * scale), Int32 (dev.height * scale),
 		sdl.windowShown
 	)
 
-	if window != nil {
-		renderer = sdl.createRenderer(
-			window, -1,
+	if dev.window != nil {
+		dev.renderer = sdl.createRenderer(
+			dev.window, -1,
 			sdl.rendererAccelerated | sdl.rendererPresentvsync
 		)
 	}
 
-	if renderer != nil {
-		texture = sdl.createTexture(
-			renderer,
+	if dev.renderer != nil {
+		dev.texture = sdl.createTexture(
+			dev.renderer,
 			sdl.pixelformatArgb8888,
 			sdl.textureaccessStreaming,
-			Int32 width, Int32 height
+			Int32 dev.width, Int32 dev.height
 		)
 	}
 
-	if texture == nil {
+	if dev.texture == nil {
 		printf("display: cannot create window: %s\n", sdl.getError())
-		destroyWindow()
-		er = er | erLINK
+		destroyWindow(dev)
+		setErrorFlag(dev, erLINK)
 		return false
 	}
 
-	activeWidth = width
-	activeHeight = height
-	framecnt = 0
-	sr = srON
+	dev.activeWidth = dev.width
+	dev.activeHeight = dev.height
+	dev.framecnt = 0
+	dev.sr = srON
 
 	// show black screen until the first refresh
-	sdl.renderClear(renderer)
-	sdl.renderPresent(renderer)
+	sdl.renderClear(dev.renderer)
+	sdl.renderPresent(dev.renderer)
 
 	return true
 }
 
 
-func closeWindow () -> Unit {
-	destroyWindow()
-	sr = 0
+func closeWindow (dev: *Device) -> Unit {
+	destroyWindow(dev)
+	dev.sr = 0
 }
 
 
-func destroyWindow () -> Unit {
-	if texture != nil {
-		sdl.destroyTexture(texture)
-		texture = nil
+func destroyWindow (dev: *Device) -> Unit {
+	if dev.texture != nil {
+		sdl.destroyTexture(dev.texture)
+		dev.texture = nil
 	}
-	if renderer != nil {
-		sdl.destroyRenderer(renderer)
-		renderer = nil
+	if dev.renderer != nil {
+		sdl.destroyRenderer(dev.renderer)
+		dev.renderer = nil
 	}
-	if window != nil {
-		sdl.destroyWindow(window)
-		window = nil
+	if dev.window != nil {
+		sdl.destroyWindow(dev.window)
+		dev.window = nil
 	}
 }
 
 
-func refresh () -> Unit {
-	if not isOn() {
-		er = er | erOFF
+func refresh (dev: *Device) -> Unit {
+	if not isOn(dev) {
+		setErrorFlag(dev, erOFF)
 		return
 	}
 
-	let pitch = activeWidth * Nat32 sizeof(Word32)
-	let pixels = memMap(fb, pitch * activeHeight)
-	if pixels == nil or (Word32 fb & 3) != 0 {
-		printf("display: bad framebuffer address 0x%08x\n", fb)
-		er = er | erFBMAP
+	let pitch = dev.activeWidth * Nat32 sizeof(Word32)
+	let pixels = dev.memMap(dev.fb, pitch * dev.activeHeight)
+	if pixels == nil or (Word32 dev.fb & 3) != 0 {
+		printf("display: bad framebuffer address 0x%08x\n", dev.fb)
+		setErrorFlag(dev, erFBMAP)
 		return
 	}
 
-	sdl.updateTexture(texture, nil, pixels, Int32 pitch)
-	sdl.renderClear(renderer)
-	sdl.renderCopy(renderer, texture, nil, nil)
-	sdl.renderPresent(renderer)
+	sdl.updateTexture(dev.texture, nil, pixels, Int32 pitch)
+	sdl.renderClear(dev.renderer)
+	sdl.renderCopy(dev.renderer, dev.texture, nil, nil)
+	sdl.renderPresent(dev.renderer)
 
-	++framecnt
+	dev.framecnt += 1
 }
 
 
 // Handle window events; closing the window is a link failure
-public func poll () -> Unit {
-	if not isOn() {
+public func poll (dev: *Device) -> Unit {
+	if not isOn(dev) {
 		return
 	}
 
 	var event: sdl.Event
 	while sdl.pollEvent(&event) != 0 {
 		if eventType(&event) == sdl.quit {
-			linkLost()
+			linkLost(dev)
 			return
 		}
 	}
 }
 
 
-func linkLost () -> Unit {
+func linkLost (dev: *Device) -> Unit {
 	printf("display: link lost\n")
-	destroyWindow()
-	cr = 0
-	sr = 0
-	er = er | erLINK
+	destroyWindow(dev)
+	dev.cr = 0
+	dev.sr = 0
+	setErrorFlag(dev, erLINK)
 }
 
 
 // Block until the user closes the window
-public func waitClose () -> Unit {
-	while isOn() {
-		poll()
+public func waitClose (dev: *Device) -> Unit {
+	while isOn(dev) {
+		poll(dev)
 		sdl.delay(16)
 	}
 }
 
 
-public func shutdown () -> Unit {
-	closeWindow()
-	if sdlReady {
+public func deinit (dev: *Device) -> Unit {
+	closeWindow(dev)
+	if dev.sdlReady {
 		sdl.shutdown()
-		sdlReady = false
+		dev.sdlReady = false
 	}
+}
+
+
+func setErrorFlag (dev: *Device, e: Word32) -> Unit {
+	dev.er = dev.er | e
 }
 
 

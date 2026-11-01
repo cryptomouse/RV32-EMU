@@ -121,7 +121,7 @@ public func cycle (hart: *Hart) -> Bool {
 		// select lowest pending interrupt
 		var int_num: Nat8 = 0
 		while (pending & (Word32 1 << int_num)) == 0 {
-			++int_num
+			int_num += 1
 		}
 		let mask = Word32 1 << int_num
 		setCsr(hart, csr.mipRegno, getCsr(hart, csr.mipRegno) & ~mask)
@@ -137,7 +137,7 @@ public func cycle (hart: *Hart) -> Bool {
 
 	// count mcycle
 	let mc = unsafe(*Nat32 &hart.csrs[csr.mcycleRegno])
-	++*mc
+	*mc += 1
 
 	return not hart.end
 }

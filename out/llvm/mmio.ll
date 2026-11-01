@@ -81,53 +81,51 @@ declare void @llvm.stackrestore(i8*)
 %GIDT = type %Nat32;
 ; from included ctypes
 ; from included stdio
-%File = type {
-};
-
+%FILE = type opaque;
 %FposT = type %Nat8;
 %CharStr = type %Str;
 %ConstCharStr = type %CharStr;
-declare %Int @fclose(i8* %f)
-declare %Int @feof(i8* %f)
-declare %Int @ferror(i8* %f)
-declare %Int @fflush(i8* %f)
-declare %Int @fgetpos(i8* %f, %FposT* %pos)
-declare i8* @fopen(%ConstCharStr* %fname, %ConstCharStr* %mode)
-declare %SizeT @fread(i8* %buf, %SizeT %size, %SizeT %count, i8* %f)
-declare %SizeT @fwrite(i8* %buf, %SizeT %size, %SizeT %count, i8* %f)
-declare i8* @freopen(%ConstCharStr* %fname, %ConstCharStr* %mode, i8* %f)
-declare %Int @fseek(i8* %f, %LongInt %offset, %Int %whence)
-declare %Int @fsetpos(i8* %f, %FposT* %pos)
-declare %LongInt @ftell(i8* %f)
+declare %Int @fclose(%FILE* %f)
+declare %Int @feof(%FILE* %f)
+declare %Int @ferror(%FILE* %f)
+declare %Int @fflush(%FILE* %f)
+declare %Int @fgetpos(%FILE* %f, %FposT* %pos)
+declare %FILE* @fopen(%ConstCharStr* %fname, %ConstCharStr* %mode)
+declare %SizeT @fread(i8* %buf, %SizeT %size, %SizeT %count, %FILE* %f)
+declare %SizeT @fwrite(i8* %buf, %SizeT %size, %SizeT %count, %FILE* %f)
+declare %FILE* @freopen(%ConstCharStr* %fname, %ConstCharStr* %mode, %FILE* %f)
+declare %Int @fseek(%FILE* %f, %LongInt %offset, %Int %whence)
+declare %Int @fsetpos(%FILE* %f, %FposT* %pos)
+declare %LongInt @ftell(%FILE* %f)
 declare %Int @remove(%ConstCharStr* %fname)
 declare %Int @rename(%ConstCharStr* %old_filename, %ConstCharStr* %new_filename)
-declare void @rewind(i8* %f)
-declare void @setbuf(i8* %f, %CharStr* %buf)
-declare %Int @setvbuf(i8* %f, %CharStr* %buf, %Int %mode, %SizeT %size)
-declare i8* @tmpfile()
+declare void @rewind(%FILE* %f)
+declare void @setbuf(%FILE* %f, %CharStr* %buf)
+declare %Int @setvbuf(%FILE* %f, %CharStr* %buf, %Int %mode, %SizeT %size)
+declare %FILE* @tmpfile()
 declare %CharStr* @tmpnam(%CharStr* %str)
 declare %Int @printf(%ConstCharStr* %str, ...)
 declare %Int @scanf(%ConstCharStr* %str, ...)
-declare %Int @fprintf(i8* %f, %Str* %format, ...)
-declare %Int @fscanf(i8* %f, %ConstCharStr* %format, ...)
+declare %Int @fprintf(%FILE* %f, %Str* %format, ...)
+declare %Int @fscanf(%FILE* %f, %ConstCharStr* %format, ...)
 declare %Int @sscanf(%ConstCharStr* %buf, %ConstCharStr* %format, ...)
 declare %Int @sprintf(%CharStr* %buf, %ConstCharStr* %format, ...)
 declare %Int @snprintf(%CharStr* %buf, %SizeT %size, %ConstCharStr* %format, ...)
-declare %Int @vfprintf(i8* %f, %ConstCharStr* %format, %__VA_List %args)
+declare %Int @vfprintf(%FILE* %f, %ConstCharStr* %format, %__VA_List %args)
 declare %Int @vprintf(%ConstCharStr* %format, %__VA_List %args)
 declare %Int @vsprintf(%CharStr* %str, %ConstCharStr* %format, %__VA_List %args)
 declare %Int @vsnprintf(%CharStr* %str, %SizeT %n, %ConstCharStr* %format, %__VA_List %args)
 declare %Int @__vsnprintf_chk(%CharStr* %dest, %SizeT %len, %Int %flags, %SizeT %dstlen, %ConstCharStr* %format, %__VA_List %arg)
-declare %Int @fgetc(i8* %f)
-declare %Int @fputc(%Int %char, i8* %f)
-declare %CharStr* @fgets(%CharStr* %str, %Int %n, i8* %f)
-declare %Int @fputs(%ConstCharStr* %str, i8* %f)
-declare %Int @getc(i8* %f)
+declare %Int @fgetc(%FILE* %f)
+declare %Int @fputc(%Int %char, %FILE* %f)
+declare %CharStr* @fgets(%CharStr* %str, %Int %n, %FILE* %f)
+declare %Int @fputs(%ConstCharStr* %str, %FILE* %f)
+declare %Int @getc(%FILE* %f)
 declare %Int @getchar()
-declare %Int @putc(%Int %char, i8* %f)
+declare %Int @putc(%Int %char, %FILE* %f)
 declare %Int @putchar(%Int %char)
 declare %Int @puts(%ConstCharStr* %str)
-declare %Int @ungetc(%Int %char, i8* %f)
+declare %Int @ungetc(%Int %char, %FILE* %f)
 declare void @perror(%ConstCharStr* %str)
 ; -- end print includes --
 ; -- print imports 'mmio' --
@@ -135,57 +133,6 @@ declare void @perror(%ConstCharStr* %str)
 ; from import "builtin"
 
 ; end from import "builtin"
-
-; from import "sdl"
-%Window = type {
-};
-
-%Renderer = type {
-};
-
-%Texture = type {
-};
-
-%Rect = type {
-	%Int32,
-	%Int32,
-	%Int32,
-	%Int32
-};
-
-%Event = type {
-};
-
-declare external %Int32 @init(%Word32 %flags)
-declare external void @shutdown()
-declare external %ConstCharStr* @getError()
-declare external %Int32 @setHint(%ConstCharStr* %name, %ConstCharStr* %value)
-declare external void @delay(%Nat32 %ms)
-declare external i8* @createWindow(%ConstCharStr* %title, %Int32 %x, %Int32 %y, %Int32 %w, %Int32 %h, %Word32 %flags)
-declare external void @destroyWindow(i8* %window)
-declare external i8* @createRenderer(i8* %window, %Int32 %index, %Word32 %flags)
-declare external void @destroyRenderer(i8* %renderer)
-declare external %Int32 @renderClear(i8* %renderer)
-declare external %Int32 @renderCopy(i8* %renderer, i8* %texture, %Rect* %srcrect, %Rect* %dstrect)
-declare external void @renderPresent(i8* %renderer)
-declare external i8* @createTexture(i8* %renderer, %Nat32 %format, %Int32 %access, %Int32 %w, %Int32 %h)
-declare external void @destroyTexture(i8* %texture)
-declare external %Int32 @updateTexture(i8* %texture, %Rect* %rect, i8* %pixels, %Int32 %pitch)
-declare external %Int32 @pollEvent(i8* %event)
-
-; end from import "sdl"
-
-; from import "display"
-%display_MemMap = type i8* (%Nat32, %Nat32)*;
-declare void @display_init(%display_MemMap %mm)
-declare %Bool @display_isOn()
-declare %Word32 @display_read32(%Nat32 %adr)
-declare void @display_write32(%Nat32 %adr, %Word32 %value)
-declare void @display_poll()
-declare void @display_waitClose()
-declare void @display_shutdown()
-
-; end from import "display"
 ; -- end print imports 'mmio' --
 ; -- strings --
 @.str1 = private constant [3 x i8] [i8 37, i8 100, i8 0]
@@ -255,21 +202,10 @@ then_3:
 else_3:
 ; if_4
 	%14 = icmp eq %Nat32 %adr, 44
-	br %Bool %14 , label %then_4, label %else_4
+	br %Bool %14 , label %then_4, label %endif_4
 then_4:
 	%15 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([3 x i8]* @.str4 to [0 x i8]*), %Word32 %value)
 	ret void
-	br label %endif_4
-else_4:
-; if_5
-	%17 = call %Bool @isDisplayAdr(%Nat32 %adr)
-	br %Bool %17 , label %then_5, label %endif_5
-then_5:
-	%18 = sub %Nat32 %adr, 4096
-	call void @display_write32(%Nat32 %18, %Word32 %value)
-	ret void
-	br label %endif_5
-endif_5:
 	br label %endif_4
 endif_4:
 	br label %endif_3
@@ -284,34 +220,15 @@ endif_0:
 }
 
 define %Word8 @mmio_read8(%Nat32 %adr) {
-	%1 = bitcast i8 0 to %Word8
-	ret %Word8 %1
+	ret %Word8 0
 }
 
 define %Word16 @mmio_read16(%Nat32 %adr) {
-	%1 = zext i8 0 to %Word16
-	ret %Word16 %1
+	ret %Word16 0
 }
 
 define %Word32 @mmio_read32(%Nat32 %adr) {
-; if_0
-	%1 = call %Bool @isDisplayAdr(%Nat32 %adr)
-	br %Bool %1 , label %then_0, label %endif_0
-then_0:
-	%2 = sub %Nat32 %adr, 4096
-	%3 = call %Word32 @display_read32(%Nat32 %2)
-	ret %Word32 %3
-	br label %endif_0
-endif_0:
-	%5 = zext i8 0 to %Word32
-	ret %Word32 %5
-}
-
-define internal %Bool @isDisplayAdr(%Nat32 %adr) alwaysinline {
-	%1 = icmp uge %Nat32 %adr, 4096
-	%2 = icmp ult %Nat32 %adr, 8192
-	%3 = and %Bool %1, %2
-	ret %Bool %3
+	ret %Word32 0
 }
 
 
