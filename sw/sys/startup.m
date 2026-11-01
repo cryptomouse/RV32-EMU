@@ -4,17 +4,25 @@ pragma unsafe
 
 
 // see mem.ld
-@extern("C", "_bss_start") var bssStart: Word8
-@extern("C", "_bss_end") var bssEnd: Word8
-@extern("C", "_data_start") var dataStart: Word8
-@extern("C", "_data_end") var dataEnd: Word8
-@extern("C", "_data_flash_start") var dataFlashStart: Word8
+@extern("_bss_start")
+var bssStart: Word8
+@extern("_bss_end")
+var bssEnd: Word8
+@extern("_data_start")
+var dataStart: Word8
+@extern("_data_end")
+var dataEnd: Word8
+@extern("_data_flash_start")
+var dataFlashStart: Word8
 
 // see base.S
-@extern("C", "memset") func memset (mem: Ptr, x: Int32, len: Size) -> Ptr
-@extern("C", "memcpy") func memcpy (dst: Ptr, src: Ptr, len: Size) -> Ptr
+@extern
+func memset (mem: Ptr, x: Int32, len: Size) -> Ptr
+@extern
+func memcpy (dst: Ptr, src: Ptr, len: Size) -> Ptr
 
-@extern("C", "main") func main () -> Int32
+@extern
+func main () -> Int32
 
 
 @alias("startup")

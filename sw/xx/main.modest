@@ -1,0 +1,176 @@
+// display - display controller demo: animated gradient
+
+include "libc/stdio"
+include "../sys/vm_sys"
+
+import "../sys/display"
+
+
+type Point2D = {x: Fixed32, y: Fixed32}
+
+
+var tickCounter: @volatile Nat32
+
+
+const frameWidth = Nat32 640
+const frameHeight = Nat32 480
+
+var frameBuffer: [frameHeight][frameWidth]display.Pixel
+
+
+// see csr.S
+@extern("irq_enable")
+func irqEnable (mieMask: Word32) -> Unit
+
+// timer interrupt: emulator sets mip bit #1 (see src/hart/hart.m intSysTimer)
+const mieTimer = Word32 1 << 1
+
+
+
+
+const screenWidth = 64
+const screenHeight = 24
+
+const symbolHeight = frameHeight / screenHeight
+const symbolWidth = frameWidth / screenWidth
+type Symbol = [symbolHeight][symbolWidth]display.Pixel
+
+
+type Screen = [screenHeight][screenWidth]Symbol
+
+
+type Color = display.Pixel
+const colorBlack = Color 0xFF000000
+const colorWhite = Color 0xFFFFFFFF
+const colorRed = Color 0xFFFF0000
+const colorGreen = Color 0xFF00FF00
+const colorBlue = Color 0xFF0000FF
+const colorYellow = Color 0xFFFFFF00
+const colorCyan = Color 0xFF00FFFF
+const colorMagenta = Color 0xFFFF00FF
+
+var colors: [8]Color = [
+	colorBlack,
+	colorWhite,
+	colorRed,
+	colorGreen,
+	colorBlue,
+	colorYellow,
+	colorCyan,
+	colorMagenta
+]
+
+func initScreen () -> Unit {
+	var i: Nat32 = 0
+	while i < screenHeight {
+		var j: Nat32 = 0
+		while j < screenWidth {
+			fillTheSymbol(i, j)
+			j += 1
+		}
+		i += 1
+	}
+}
+
+func fillTheSymbol (i: Nat32, j: Nat32) -> Unit {
+	var k: Nat32 = 0
+	while k < symbolHeight {
+		var l: Nat32 = 0
+		while l < symbolWidth {
+			frameBuffer[i * symbolHeight + k][j * symbolWidth + l] = colors[(i + j) % 8]
+			l += 1
+		}
+		k += 1
+	}
+}
+
+func main () -> Int {
+	printf("1display demo: %dx%d\n", frameWidth, frameHeight)
+
+	init()
+
+	//drawLine({x=10.0, y=20.0}, {x=40.0, y=55.0})
+
+	initScreen()
+
+	display.update()
+
+	//var state: Bool = true
+	while true {
+		let e = display.getError()
+		if e != 0 {
+			printf("2display demo: error: 0x%08x\n", Nat32 e)
+			break
+		}
+		printf("3frame %d\n", display.getFrameCounter())
+
+		//frameBuffer = screen[display.getFrameCounter() % screenHeight]
+
+		//displaySetDot(state)
+		// state = not state
+		while tickCounter < 100000 {
+			// wait for 100000 interrupts (1 second)
+		}
+		tickCounter = 0
+	}
+
+	printf("4frames shown: %d\n", display.getFrameCounter())
+
+	return 0
+}
+
+
+func init () -> Unit {
+	let error = display.init(&frameBuffer, frameWidth, frameHeight)
+	if error != display.errorNone {
+		printf("5display demo: cannot setup display, error: 0x%08x\n", Nat32 error)
+	}
+
+	irqEnable(mieTimer)
+}
+
+
+func displaySetDot (state: Bool) -> Unit {
+	let x = frameWidth / 2
+	let y = frameHeight / 2
+
+	if state {
+		frameBuffer[y][x] = display.Pixel 0xFFFFFFFF
+	} else {
+		frameBuffer[y][x] = display.Pixel 0xFF000000
+	}
+
+	display.update()
+}
+
+
+func absfx32 (x: Fixed32) -> Fixed32 {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+// func drawLine (a: Point2D, b: Point2D) -> Unit {
+// 	let xlen = absfx32(a.x - b.x)
+// 	let ylen = absfx32(a.y - b.y)
+// 	printf("xlen = %d, ylen = %d\n", Int32 xlen, Int32 ylen)
+// 	var i = 0
+// 	while i < xlen {
+// 		var j = 0
+// 		while j < ylen {
+// 			frameBuffer[y][x] = display.Pixel 0xFFFFFFFF
+// 			j += 1
+// 		}
+// 		i += 1
+// 	}
+// }
+
+
+
+// called from _trap (see sys/vect.S)
+@alias("__isr")
+public func isr () -> Unit {
+	tickCounter += 1
+}
+

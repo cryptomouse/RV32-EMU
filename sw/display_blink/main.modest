@@ -16,7 +16,7 @@ var frameBuffer: [frameHeight][frameWidth]display.Pixel
 
 
 // see csr.S
-@extern("C", "irq_enable")
+@extern("irq_enable")
 func irqEnable (mieMask: Word32) -> Unit
 
 // timer interrupt: emulator sets mip bit #1 (see src/hart/hart.m intSysTimer)

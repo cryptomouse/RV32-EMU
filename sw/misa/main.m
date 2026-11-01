@@ -58,7 +58,7 @@ func printMisa (misa: Word32) -> Unit {
 		if misa & (Word32 1 << i) != 0 {
 			printf("%c", exts[i])
 		}
-		++i
+		i += 1
 	}
 
 	printf("\n")

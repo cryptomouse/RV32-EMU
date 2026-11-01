@@ -19,7 +19,7 @@ var frameBuffer: [frameHeight][frameWidth]display.Pixel
 
 
 // see csr.S
-@extern("C", "irq_enable")
+@extern("irq_enable")
 func irqEnable (mieMask: Word32) -> Unit
 
 // timer interrupt: emulator sets mip bit #1 (see src/hart/hart.m intSysTimer)
@@ -95,9 +95,9 @@ func drawLine (a: Point2D, b: Point2D) -> Unit {
 		var j = 0
 		while j < ylen {
 			frameBuffer[y][x] = display.Pixel 0xFFFFFFFF
-			++j
+			j += 1
 		}
-		++i
+		i += 1
 	}
 }
 

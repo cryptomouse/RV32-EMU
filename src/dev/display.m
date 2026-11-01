@@ -70,6 +70,11 @@ const erFBMAP = Word32 0x40
 const maxWidth = Nat32 4096
 const maxHeight = Nat32 4096
 
+// window scale factor: each framebuffer pixel is shown as a
+// windowScale x windowScale square; 0 = pick automatically to fit
+// preferredWindowWidth x preferredWindowHeight
+const windowScale = Nat32 2
+
 // the window is scaled up (by an integer factor) to fit this size
 const preferredWindowWidth = Nat32 640
 const preferredWindowHeight = Nat32 480
@@ -209,9 +214,9 @@ func openWindow (dev: *Device) -> Bool {
 		dev.sdlReady = true
 	}
 
-	var scale = Nat32 1
-	while dev.width * (scale + 1) <= preferredWindowWidth and dev.height * (scale + 1) <= preferredWindowHeight {
-		scale += 1
+	var scale = windowScale
+	if scale == 0 {
+		scale = autoScale(dev.width, dev.height)
 	}
 
 	dev.window = sdl.createWindow(
@@ -255,6 +260,16 @@ func openWindow (dev: *Device) -> Bool {
 	sdl.renderPresent(dev.renderer)
 
 	return true
+}
+
+
+// largest integer scale that fits preferredWindowWidth x preferredWindowHeight
+func autoScale (width: Nat32, height: Nat32) -> Nat32 {
+	var scale = Nat32 1
+	while width * (scale + 1) <= preferredWindowWidth and height * (scale + 1) <= preferredWindowHeight {
+		scale += 1
+	}
+	return scale
 }
 
 

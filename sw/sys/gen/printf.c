@@ -15,7 +15,7 @@ void put_str8(char *s) {
 	uint32_t i = 0;
 	while (s[i] != (char)0) {
 		putchar(s[i]);
-		++i;
+		i += 1;
 	}
 }
 
@@ -50,21 +50,21 @@ static void vprint(char *form, va_list va) {
 		char c = form[i];
 		if (c != '%') {
 			putchar(c);
-			++i;
+			i += 1;
 			continue;
 		}
-		++i;
+		i += 1;
 		c = form[i];
 		char pad = ' ';
 		if (c == '0') {
 			pad = c;
-			++i;
+			i += 1;
 			c = form[i];
 		}
 		int32_t width = 0;
 		while (isDigit(c)) {
 			width = width * 10 + digitValue(c);
-			++i;
+			i += 1;
 			c = form[i];
 		}
 		char buf[11 + 1] = {0};
@@ -84,14 +84,14 @@ static void vprint(char *form, va_list va) {
 		}
 		int32_t len = 0;
 		while (sptr[len] != (char)0) {
-			++len;
+			len += 1;
 		}
 		while (len < width) {
 			putchar(pad);
-			++len;
+			len += 1;
 		}
 		put_str8(sptr);
-		++i;
+		i += 1;
 	}
 }
 
@@ -118,16 +118,16 @@ static void sprintfHex32(char *buf, uint32_t d, char alpha) {
 		} else {
 			cc[i] = (char)((uint8_t)alpha + (n - 10));
 		}
-		++i;
+		i += 1;
 		if (x == 0x0) {
 			break;
 		}
 	}
 	uint32_t j = 0;
 	while (i != 0) {
-		--i;
+		i -= 1;
 		buf[j] = cc[i];
-		++j;
+		j += 1;
 	}
 	buf[j] = (char)0;
 }
@@ -144,7 +144,7 @@ static void sprintfDec32(char *buf, int32_t d) {
 		const int32_t n = x % 10;
 		x = x / 10;
 		cc[i] = (char)((uint8_t)'0' + (uint8_t)(uint32_t)n);
-		++i;
+		i += 1;
 		if (x == 0) {
 			break;
 		}
@@ -152,12 +152,12 @@ static void sprintfDec32(char *buf, int32_t d) {
 	uint32_t j = 0;
 	if (neg) {
 		buf[0] = '-';
-		++j;
+		j += 1;
 	}
 	while (i != 0) {
-		--i;
+		i -= 1;
 		buf[j] = cc[i];
-		++j;
+		j += 1;
 	}
 	buf[j] = (char)0;
 }

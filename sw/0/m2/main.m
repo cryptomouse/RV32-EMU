@@ -32,7 +32,7 @@ func main () -> Int32 {
 @extern("C", "__isr")
 func __isr() -> Unit {
 	console.puts("Interupt handled\n")
-	++int_cnt
+	int_cnt += 1
 	//while true {
 		// Wait for interrupt to be handled
 	//}

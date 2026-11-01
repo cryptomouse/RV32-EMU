@@ -18,6 +18,7 @@
 #define ER_FBMAP 0x40
 #define MAX_WIDTH 4096
 #define MAX_HEIGHT 4096
+#define WINDOW_SCALE 2
 #define PREFERRED_WINDOW_WIDTH 640
 #define PREFERRED_WINDOW_HEIGHT 480
 
@@ -109,6 +110,7 @@ static void write32(display_Device *dev, uint32_t adr, uint32_t value) {
 	}
 }
 
+static uint32_t autoScale(uint32_t width, uint32_t height);
 static void destroyWindow(display_Device *dev);
 
 static bool openWindow(display_Device *dev) {
@@ -127,9 +129,9 @@ static bool openWindow(display_Device *dev) {
 		}
 		dev->sdlReady = true;
 	}
-	uint32_t scale = 1;
-	while (dev->width * (scale + 1) <= PREFERRED_WINDOW_WIDTH && dev->height * (scale + 1) <= PREFERRED_WINDOW_HEIGHT) {
-		scale += 1;
+	uint32_t scale = WINDOW_SCALE;
+	if (scale == 0) {
+		scale = autoScale(dev->width, dev->height);
 	}
 	dev->window = SDL_CreateWindow("RV32-EMU", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, (int32_t)(dev->width * scale), (int32_t)(dev->height * scale), SDL_WINDOW_SHOWN);
 	if (dev->window != NULL) {
@@ -151,6 +153,15 @@ static bool openWindow(display_Device *dev) {
 	SDL_RenderClear(dev->renderer);
 	SDL_RenderPresent(dev->renderer);
 	return true;
+}
+
+
+static uint32_t autoScale(uint32_t width, uint32_t height) {
+	uint32_t scale = 1;
+	while (width * (scale + 1) <= PREFERRED_WINDOW_WIDTH && height * (scale + 1) <= PREFERRED_WINDOW_HEIGHT) {
+		scale += 1;
+	}
+	return scale;
 }
 
 static void closeWindow(display_Device *dev) {

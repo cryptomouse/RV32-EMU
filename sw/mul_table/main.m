@@ -33,7 +33,7 @@ func main () -> Int {
 	var j: Int32 = 1
 	while j <= n {
 		printNum(j, width=4)
-		++j
+		j += 1
 	}
 	printf("\n")
 
@@ -41,7 +41,7 @@ func main () -> Int {
 	j = 1
 	while j <= n {
 		printf("----")
-		++j
+		j += 1
 	}
 	printf("\n")
 
@@ -53,10 +53,10 @@ func main () -> Int {
 		j = 1
 		while j <= n {
 			printNum(i * j, width=4)
-			++j
+			j += 1
 		}
 		printf("\n")
-		++i
+		i += 1
 	}
 
 	return 0

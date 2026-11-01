@@ -37,7 +37,7 @@ func main () -> Int {
 			break
 		}
 
-		++offset
+		offset += 1
 	}
 
 	printf("frames shown: %d\n", display.getFrameCounter())
@@ -55,9 +55,9 @@ func draw (offset: Nat32) -> Unit {
 			let g = Word32 ((y + offset) % 256)
 			let b = Word32 128
 			frameBuffer[y][x] = display.Pixel (0xFF000000 | (r << 16) | (g << 8) | b)
-			++x
+			x += 1
 		}
-		++y
+		y += 1
 	}
 }
 

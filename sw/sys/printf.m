@@ -18,7 +18,7 @@ public func putStr8 (s: *Str8) -> Unit {
 	var i: Nat32 = 0
 	while s[i] != Char8 0 {
 		putchar(s[i])
-		++i
+		i += 1
 	}
 }
 
@@ -51,25 +51,25 @@ func vprint (form: *Str8, va: __VA_List) -> Unit {
 
 		if c != Char8 "%" {
 			putchar(c)
-			++i
+			i += 1
 			again
 		}
 
-		++i
+		i += 1
 		c = form[i]
 
 		// flag '0' and field width: %02X, %8d
 		var pad = Char8 " "
 		if c == Char8 "0" {
 			pad = c
-			++i
+			i += 1
 			c = form[i]
 		}
 
 		var width: Int32 = 0
 		while isDigit(c) {
 			width = width * 10 + digitValue(c)
-			++i
+			i += 1
 			c = form[i]
 		}
 
@@ -94,16 +94,16 @@ func vprint (form: *Str8, va: __VA_List) -> Unit {
 
 		var len: Int32 = 0
 		while sptr[len] != Char8 0 {
-			++len
+			len += 1
 		}
 		while len < width {
 			putchar(pad)
-			++len
+			len += 1
 		}
 
 		putStr8(sptr)
 
-		++i
+		i += 1
 	}
 }
 
@@ -136,7 +136,7 @@ func sprintfHex32 (buf: *[12]Char8, d: Word32, alpha: Char8) -> Unit {
 		} else {
 			cc[i] = Char8 Word8 (Nat8 Word8 alpha + (n - 10))
 		}
-		++i
+		i += 1
 
 		if x == 0 {
 			break
@@ -146,9 +146,9 @@ func sprintfHex32 (buf: *[12]Char8, d: Word32, alpha: Char8) -> Unit {
 	// mirroring into buffer
 	var j: Nat32 = 0
 	while i != 0 {
-		--i
+		i -= 1
 		buf[j] = cc[i]
-		++j
+		j += 1
 	}
 
 	buf[j] = Char8 0
@@ -170,7 +170,7 @@ func sprintfDec32 (buf: *[12]Char8, d: Int32) -> Unit {
 		let n = x % 10
 		x = x / 10
 		cc[i] = Char8 Word8 (Nat8 Word8 Char8 "0" + Nat8 Word8 Word32 n)
-		++i
+		i += 1
 
 		if x == 0 {
 			break
@@ -180,13 +180,13 @@ func sprintfDec32 (buf: *[12]Char8, d: Int32) -> Unit {
 	var j: Nat32 = 0
 	if neg {
 		buf[0] = Char8 "-"
-		++j
+		j += 1
 	}
 
 	while i != 0 {
-		--i
+		i -= 1
 		buf[j] = cc[i]
-		++j
+		j += 1
 	}
 
 	buf[j] = Char8 0
