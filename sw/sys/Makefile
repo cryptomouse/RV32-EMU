@@ -6,15 +6,13 @@ MODEST = $(MODEST_DIR)/modest
 MODEST_OPTS = --config=rv32.toml -mbackend=c11
 GEN = gen
 
-MODULES = vm_sys console system printf muldivmod startup
-MODEST_MODULES = display
+MODULES = vm_sys console system printf muldivmod startup display
 
 
 # translate Modest to C
 all:
 	mkdir -p $(GEN)
-	$(foreach m,$(MODULES),$(MODEST) -o $(GEN)/$(m) $(MODEST_OPTS) $(m).m &&) true
-	$(foreach m,$(MODEST_MODULES),$(MODEST) -o $(GEN)/$(m) $(MODEST_OPTS) $(m).modest &&) true
+	$(foreach m,$(MODULES),$(MODEST) -o $(GEN)/$(m) $(MODEST_OPTS) $(m).modest &&) true
 
 
 clean:

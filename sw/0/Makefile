@@ -22,10 +22,10 @@ LDSCRIPT = $(SYS)/mem.ld
 all:
 	$(MAKE) -C $(SYS)
 
-	mcc -mbackend=c11 -o src/riscv m2/riscv.m
-	mcc -mbackend=c11 -o src/main m2/main.m
-	mcc -mbackend=c11 -o src/console m2/console.m
-	mcc -mbackend=c11 -o src/riscv_emu m2/riscv_emu.m
+	mcc -mbackend=c11 -o src/riscv m2/riscv.modest
+	mcc -mbackend=c11 -o src/main m2/main.modest
+	mcc -mbackend=c11 -o src/console m2/console.modest
+	mcc -mbackend=c11 -o src/riscv_emu m2/riscv_emu.modest
 
 	# translate C to ASM
 	#$(CC) $(CFLAGS) -S src/main.c

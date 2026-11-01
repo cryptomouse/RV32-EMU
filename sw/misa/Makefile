@@ -58,7 +58,7 @@ all: modest
 modest:
 	$(MAKE) -C $(SYS)
 	mkdir -p $(GEN)
-	$(MODEST) -o $(GEN)/main $(MODEST_OPTS) main.m
+	$(MODEST) -o $(GEN)/main $(MODEST_OPTS) main.modest
 
 
 clean:
